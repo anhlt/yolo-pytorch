@@ -1,0 +1,4 @@
+tensorboardX
+jupyter
+nose
+jupyterlab
