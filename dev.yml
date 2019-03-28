@@ -3,23 +3,14 @@ services:
     python:
         build:
             context: .
-            dockerfile: ./dockerfiles/Dockerfile
-        container_name : yolo
-        image: "tuananhbk/yolo:gpu"
-        ports:
-            - "8889:8889"
-        volumes:
-            - ".:/data"
-        user: anh
-        working_dir: /data
-        tty: true
+            dockerfile: ./dockerfiles/Dockerfile-cpu
         command: jupyter lab --ip=0.0.0.0 --port=8889 --NotebookApp.password='sha1:4018b457b8a9:84c65a176a549c58609c3cf38fa50b4b1b12b808'
     anaconda:
-        image: "tuananhbk/yolo:gpu"
+        image: "tuananhbk/yolo:cpu"
         ports:
             - "19361:19361"
         volumes:
-            - /home/anh/.config/sublime-text-3/Packages/Anaconda:/opt/anaconda
+            - "/Users/anhlt/Library/Application\ Support/Sublime\ Text\ 3/Packages/Anaconda:/opt/anaconda"
             - ".:/data"
         depends_on:
             - python
