@@ -52,9 +52,9 @@ def preprocess_true_boxes(np.ndarray[DTYPE_t, ndim=2] true_boxes,
 
     cdef unsigned int num_box_params = true_boxes.shape[1]
     cdef np.ndarray[DTYPE_t, ndim=4] detectors_mask = np.zeros(
-        (conv_height, conv_width, num_anchors, 1), dtype=DTYPE)
+        (num_anchors, 1, conv_height, conv_width), dtype=DTYPE)
     cdef np.ndarray[DTYPE_t, ndim=4] matching_true_boxes = np.zeros(
-        (conv_height, conv_width, num_anchors, num_box_params),
+        (num_anchors, num_box_params, conv_height, conv_width),
         dtype=DTYPE)
 
     cdef np.float_t box_class
@@ -92,7 +92,7 @@ def preprocess_true_boxes(np.ndarray[DTYPE_t, ndim=2] true_boxes,
                 best_anchor = k
 
         if best_iou > 0:
-            detectors_mask[i, j, best_anchor] = 1
+            detectors_mask[best_anchor, : ,i, j] = 1
             adjusted_box = np.array(
                 [
                     unscaled_box[0] - j, unscaled_box[1] - i,
@@ -100,5 +100,5 @@ def preprocess_true_boxes(np.ndarray[DTYPE_t, ndim=2] true_boxes,
                     np.log(unscaled_box[3] / anchors[best_anchor][1]), box_class
                 ],
                 dtype=np.float32)
-            matching_true_boxes[i, j, best_anchor] = adjusted_box
+            matching_true_boxes[best_anchor, : ,i, j] = adjusted_box
     return detectors_mask, matching_true_boxes

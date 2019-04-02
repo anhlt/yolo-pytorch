@@ -19,7 +19,7 @@ class Conv2d(nn.Module):
         super(Conv2d, self).__init__()
         padding = int((kernel_size - 1) / 2) if same_padding else 0
         self.conv = nn.Conv2d(in_channels, out_channels,
-                              kernel_size, stride, padding=padding)
+                              kernel_size, stride, padding=padding, bias=not bn)
         nn.init.xavier_normal_(self.conv.weight)
         self.bn = nn.BatchNorm2d(
             out_channels, eps=0.001,
