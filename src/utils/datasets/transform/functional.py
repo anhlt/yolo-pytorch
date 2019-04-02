@@ -195,7 +195,6 @@ def resize(img, size, interpolation=Image.BILINEAR):
     Returns:
         PIL Image: Resized image.
     """
-    print(size)
     if not _is_pil_image(img):
         raise TypeError('img should be PIL Image. Got {}'.format(type(img)))
     if not (isinstance(size, int) or (isinstance(size, Iterable) and len(size) == 2)):
@@ -212,7 +211,6 @@ def resize(img, size, interpolation=Image.BILINEAR):
         else:
             oh = size
             ow = int(size * w / h)
-            print(oh, ow)
             return img.resize((ow, oh), interpolation)
     else:
         return img.resize(size[::-1], interpolation)

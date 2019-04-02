@@ -91,7 +91,6 @@ class XyToCenter(object):
         Returns:
             PIL Image: Rescaled image.
         """
-        print(bboxes)
         image_width, image_height = img.size
 
         bbox_width = bboxes[:, 2] - bboxes[:, 0]

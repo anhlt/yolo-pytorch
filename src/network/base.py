@@ -1,6 +1,7 @@
 from torch import nn
 from torch.nn import MaxPool2d
 import torch
+import torch.nn.functional as F
 
 
 class Conv2d(nn.Module):
@@ -93,21 +94,14 @@ class DarknetBodyBottom(nn.Module):
 
     def forward(self, x):
         x = self.first_layer(x)
-        print(x.shape)
         x = self.second_layer(x)
-        print(x.shape)
-
         x = self.third_layer(x)
         x = self.forth_layer(x)
-        print(x.shape)
         x = self.fifth_layer(x)
         x = self.sixth_layer(x)
-        print(x.shape)
         x = self.seventh_layer(x)
         x = self.eighth_layer(x)
-        print(x.shape)
         x = self.nineth_layer(x)
-        print(x.shape)
         return x
 
 
@@ -215,22 +209,62 @@ class YoloBody(nn.Module):
         self.last_layer = nn.Conv2d(1024, num_anchors * (5 + num_classes), 1, 1, 0, bias=False)
 
     def forward(self, x):
-        print(x.shape)
         x1 = self.body_bottom(x)
-        print(x1.shape)
         x = self.body_head(x1)
-        print(x.shape)
         x = self.first_layer(x)
         x = self.second_layer(x)
-
-        print(x.shape)
-
         x1 = self.find_grain(x1)
-        print(x1.shape)
         x1 = self.re_org(x1)
-        print(x1.shape)
-
         x = torch.cat((x, x1), dim=1)
         x = self.after_concat(x)
         x = self.last_layer(x)
         return x
+
+
+class YoloHead(nn.Module):
+    """docstring for YoloHead"""
+
+    def __init__(self, anchors, num_classes):
+        """Convert final layer features to bounding box
+
+        Parameters
+        ----------
+        anchors : torch.Tensor
+            List of anchors in form of w, h.
+            shape (num_anchors, 2)
+        num_classes : int
+            number of target class
+        """
+        super(YoloHead, self).__init__()
+        self.anchors = anchors
+        self.num_classes = num_classes
+
+    def forward(self, x):
+        """Summary
+
+        Parameters
+        ----------
+        x : torch.Tensor
+            Convolution feature shape (batch, (5 + num_classes) * num_anchors, conv_height, conv_width)
+        """
+        num_anchors = len(self.anchors)
+        conv_height, conv_width = x.shape[2:4]
+
+        x_shifts, y_shifts = torch.meshgrid([torch.arange(0, conv_width), torch.arange(0, conv_height)])
+        shifts = torch.stack((y_shifts.flatten(), x_shifts.flatten())).transpose(1, 0).contiguous()
+
+        shifts = shifts.view((1, 1, 2, conv_height, conv_width)).type(torch.FloatTensor)
+
+        x = x.view((-1, num_anchors, self.num_classes + 5, conv_height, conv_width))
+        anchors_tensor = self.anchors.view((1, num_anchors, 2, 1, 1)).type(torch.FloatTensor)
+        conv_dims = torch.tensor((conv_height, conv_width)).view(1, 1, 2, 1, 1).type(torch.FloatTensor)
+
+        box_confidence = x[:, :, 4:5, ...]
+        box_xy = x[:, :, :2, ...]
+        box_wh = x[:, :, 2:4, ...]
+        box_class_probs = F.softmax(x[:, :, 5:, ...], dim=2)
+
+        box_xy = (box_xy + shifts) / conv_dims
+        box_wh = (box_wh * anchors_tensor) / conv_dims
+
+        return box_confidence, box_xy, box_wh, box_class_probs
