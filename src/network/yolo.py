@@ -44,18 +44,23 @@ class Yolo(nn.Module):
         matching_true_boxes : torch.Tensor
             Same shape as detectors_mask with the corresponding ground truth box
             adjusted for comparison with predicted parameters at training time.
+            [batch_sizes, num_anchors, 4 + num_class, conv_height, conv_width]
 
         """
         # classification loss
 
         pred_confidence, pred_xy, pred_wh, pred_class_prob = self.yolo_head(yolo_output)
-        # pred_conficence : torch.Size([batch_size, num_anchors, 1, conv_height, conv_width])
+        # pred_confidence : torch.Size([batch_size, num_anchors, 1, conv_height, conv_width])
         # pred_wh : torch.Size([batch_size, num_anchors, 2, conv_height, conv_width])
         # pred_xy : torch.Size([batch_size, num_anchors, 2, conv_height, conv_width])
         # pred_class_prob : torch.Size([batch_size, num_anchors, 3, conv_height, conv_width])
 
         batch_size, conv_number_channels, feats_height, feats_width = yolo_output.shape
         feats = yolo_output.view((-1, self.num_anchors, self.num_classes + 5, feats_height, feats_width))
+
+        box_xy = torch.sigmoid(feats[:, :, :2, ...])
+        box_wh = feats[:, :, 2:4, ...]
+        pred_boxes = torch.cat((box_xy, box_wh), 2)
 
         # batch, num_anchors, num_true_boxes, box_params, conv_height, conv_width
 
@@ -90,8 +95,23 @@ class Yolo(nn.Module):
         best_iou, best_iou_index = torch.max(iou_scores, dim=2, keepdim=True)
         # torch.Size([batch_size, num_anchors, 1, conv_height, conv_width])
 
-        object_detections = (best_iou > self.iou_threshold).type(torch.FloatTensor)         # torch.Size([batch_size, num_anchors, 1, conv_height, conv_width])
+        object_mask = (best_iou > self.iou_threshold).type(torch.FloatTensor)         # torch.Size([batch_size, num_anchors, 1, conv_height, conv_width])
 
-        print(object_detections.shape)
-        print(detectors_mask.shape)
-        print(pred_confidence.shape)
+        no_object_weigth = self.no_object_scale * (1 - object_mask) * (1 - detectors_mask)
+        no_object_loss = no_object_weigth * ((- pred_confidence) ** 2)
+
+        object_loss = self.object_scale * detectors_mask * ((best_iou - pred_confidence) ** 2)
+
+        confidence_loss = object_loss + no_object_loss
+
+        matching_classes = matching_true_boxes[:, :, 4:, ...]
+
+        classification_loss = self.class_scale * detectors_mask * (matching_classes - pred_class_prob) ** 2
+
+        matching_boxes = matching_true_boxes[:, :, 0:4, ...]
+
+        coordinates_loss = self.coordinates_scale * detectors_mask * (matching_boxes - pred_boxes) ** 2
+
+        total_loss = 0.5 * (confidence_loss.sum() + classification_loss.sum() + coordinates_loss.sum()) / batch_size
+
+        return total_loss

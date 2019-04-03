@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def preprocess_true_boxes(true_boxes, anchors, image_size):
+def preprocess_true_boxes(true_boxes, anchors, image_size, num_classes):
     """Find detector in YOLO where ground truth box should appear.
     Parameters
     ----------
@@ -32,7 +32,7 @@ def preprocess_true_boxes(true_boxes, anchors, image_size):
     assert width % 32 == 0, 'Image sizes in YOLO_v2 must be multiples of 32.'
     conv_height = height // 32
     conv_width = width // 32
-    num_box_params = true_boxes.shape[1]
+    num_box_params = true_boxes.shape[1] - 1 + num_classes
     detectors_mask = np.zeros(
         (num_anchors, 1, conv_height, conv_width), dtype=np.float32)
     matching_true_boxes = np.zeros(
@@ -41,7 +41,10 @@ def preprocess_true_boxes(true_boxes, anchors, image_size):
 
     for box in true_boxes:
         # scale box to convolutional feature spatial dimensions
-        box_class = box[4:5]
+        box_class = box[4:5].astype(np.int32)
+        box_class_one_hot = np.zeros(num_classes)
+        box_class_one_hot[box_class] = 1
+
         box = box[0:4] * np.array(
             [conv_width, conv_height, conv_width, conv_height])
         i = np.floor(box[1]).astype('int')
@@ -73,8 +76,9 @@ def preprocess_true_boxes(true_boxes, anchors, image_size):
                 [
                     box[0] - j, box[1] - i,
                     np.log(box[2] / anchors[best_anchor][0]),
-                    np.log(box[3] / anchors[best_anchor][1]), box_class
+                    np.log(box[3] / anchors[best_anchor][1])
                 ],
                 dtype=np.float32)
+            adjusted_box = np.concatenate((adjusted_box, box_class_one_hot))
             matching_true_boxes[best_anchor, :, i, j] = adjusted_box
     return detectors_mask, matching_true_boxes

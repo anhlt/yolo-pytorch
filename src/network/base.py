@@ -259,8 +259,8 @@ class YoloHead(nn.Module):
         anchors_tensor = self.anchors.view((1, num_anchors, 2, 1, 1)).type(torch.FloatTensor)
         conv_dims = torch.tensor((conv_height, conv_width)).view(1, 1, 2, 1, 1).type(torch.FloatTensor)
 
-        box_confidence = x[:, :, 4:5, ...]
-        box_xy = x[:, :, :2, ...]
+        box_confidence = torch.sigmoid(x[:, :, 4:5, ...])
+        box_xy = torch.sigmoid(x[:, :, :2, ...])
         box_wh = x[:, :, 2:4, ...]
         box_class_probs = F.softmax(x[:, :, 5:, ...], dim=2)
 
