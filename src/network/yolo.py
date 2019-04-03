@@ -1,15 +1,17 @@
 from .base import YoloBody, YoloHead
 from torch import nn
 import torch
+from ..config import IOU_THRESHOLD
 
 
 class Yolo(nn.Module):
     """docstring for Yolo"""
 
-    def __init__(self, anchors, classes):
+    def __init__(self, anchors, classes, iou_threshold=IOU_THRESHOLD):
         super(Yolo, self).__init__()
         self.num_anchors = anchors.shape[0]
         self.classes = classes
+        self.num_classes = len(classes)
         self.anchors = torch.from_numpy(anchors)
         self.yolo_body = YoloBody(num_anchors=self.num_anchors, num_classes=len(classes))
         self.yolo_head = YoloHead(self.anchors, len(classes))
@@ -18,12 +20,13 @@ class Yolo(nn.Module):
         self.no_object_scale = 1
         self.class_scale = 1
         self.coordinates_scale = 1
+        self.iou_threshold = iou_threshold
 
     def forward(self, x):
         conv_features = self.yolo_body(x)
-        x = self.yolo_head(x)
-        x = self.yolo_head(conv_features)
-        return x
+        # x = self.yolo_head(x)
+        # x = self.yolo_head(conv_features)
+        return conv_features
 
     def loss(self, yolo_output: torch.Tensor, true_boxes: torch.Tensor, detectors_mask: torch.Tensor, matching_true_boxes: torch.Tensor):
         """Summary
@@ -36,7 +39,7 @@ class Yolo(nn.Module):
             Ground truth boxes tensor with shape [batch, num_true_boxes, 5]
             containing box x_center, y_center, width, height, and class.
         detectors_mask : torch.Tensor
-            0/1 mask for detectors in [num_anchors, 1, conv_height, conv_width]
+            0/1 mask for detectors in [batch_sizes, num_anchors, 1, conv_height, conv_width]
             that should be compared with a matching ground truth box.
         matching_true_boxes : torch.Tensor
             Same shape as detectors_mask with the corresponding ground truth box
@@ -65,12 +68,30 @@ class Yolo(nn.Module):
 
         true_boxes_shape = true_boxes.shape
 
-        true_boxes = true_boxes.view(true_boxes_shape[0], 1, true_boxes_shape[0], true_boxes_shape[1], 1, 1)
+        true_boxes = true_boxes.view(true_boxes_shape[0], 1, true_boxes_shape[1], true_boxes_shape[2], 1, 1)
 
         true_xy = true_boxes[:, :, :, 0:2, ...]
         true_wh = true_boxes[:, :, :, 2:4, ...]
 
-
         true_wh_mid_point = true_wh / 2
         true_max = true_xy + true_wh_mid_point
         true_min = true_xy - true_wh_mid_point
+
+        intersect_min = torch.min(true_min, pred_min)
+        intersect_max = torch.max(true_max, pred_max)
+        intersect_wh = (intersect_max - intersect_min).clamp(min=0)
+        intersect_areas = intersect_wh[:, :, :, 0, ...] * intersect_wh[:, :, :, 1, ...]
+
+        pred_areas = pred_wh[:, :, :, 0, ...] * pred_wh[:, :, :, 1, ...]
+        true_areas = true_wh[:, :, :, 0, ...] * true_wh[:, :, :, 1, ...]
+
+        union_areas = pred_areas + true_areas - intersect_areas
+        iou_scores = intersect_areas / union_areas  # torch.Size([batch_size, num_anchors, num_true_boxes, conv_height, conv_width])
+        best_iou, best_iou_index = torch.max(iou_scores, dim=2, keepdim=True)
+        # torch.Size([batch_size, num_anchors, 1, conv_height, conv_width])
+
+        object_detections = (best_iou > self.iou_threshold).type(torch.FloatTensor)         # torch.Size([batch_size, num_anchors, 1, conv_height, conv_width])
+
+        print(object_detections.shape)
+        print(detectors_mask.shape)
+        print(pred_confidence.shape)
