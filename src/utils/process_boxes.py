@@ -139,16 +139,21 @@ def yolo_filter_boxes(box_confidence, boxes, box_class_probs, threshold=.1):
         Filtered boxes, scores, classes
     """
 
+    batch_size, num_anchors, _, conv_height, conv_width = box_confidence.shape
+
     box_scores = box_confidence * box_class_probs
 
     box_classes = torch.argmax(box_scores, dim=2, keepdim=True)
-    print(box_classes.shape)
+
     box_class_scores, _ = torch.max(box_scores, dim=2, keepdim=True)
 
     prediction_mask = box_class_scores > threshold
 
     classes = box_classes[prediction_mask]
-    boxes = boxes[prediction_mask.expand(boxes.shape)]
-    scores = box_class_scores[prediction_mask.expand(box_class_scores.shape)]
+    scores = box_class_scores[prediction_mask]
+
+    boxes = boxes.permute(0, 1, 3, 4, 2)
+    prediction_mask = prediction_mask.permute(0, 1, 3, 4, 2)
+    boxes = boxes[prediction_mask.expand_as(boxes)].view(-1, 4)
 
     return boxes, scores, classes
