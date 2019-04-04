@@ -1,4 +1,5 @@
 import numpy as np
+import torch
 
 
 def preprocess_true_boxes(true_boxes, anchors, image_size, num_classes):
@@ -82,3 +83,72 @@ def preprocess_true_boxes(true_boxes, anchors, image_size, num_classes):
             adjusted_box = np.concatenate((adjusted_box, box_class_one_hot))
             matching_true_boxes[best_anchor, :, i, j] = adjusted_box
     return detectors_mask, matching_true_boxes
+
+
+def boxes_to_cornels(box_xy, box_wh):
+    """Convert boxes from x_center,y_center, width, height to x_min, y_min, x_max, ymax
+
+    Parameters
+    ----------
+    box_xy : torch.Tensor
+        Predicted xy value
+        shape [batch_size, num_anchors, 2, conv_height, conv_width]
+    box_wh : torch.Tensor
+        Predicted wh value shape [batch_size, num_anchors, 2, conv_height, conv_width]
+    Returns
+    -------
+    torch.Tensor
+        Boxes in x_min, y_min, x_max, y_max for mat
+        shape [batch_size, num_anchors, 4, conv_height, conv_width]
+
+    """
+
+    box_mins = box_xy - box_wh / 2.
+    box_maxes = box_xy + box_wh / 2.
+
+    return torch.cat(
+        (
+            box_mins,
+            box_maxes
+        ),
+        dim=2
+    )
+
+
+def yolo_filter_boxes(box_confidence, boxes, box_class_probs, threshold=.1):
+    """filter boxes that has score smaller than threshold
+    https://github.com/vietnguyen91/Yolo-v2-pytorch/blob/9589413b5dce0476eb9cccc41945cf30cf131b34/src/utils.py
+    Parameters
+    ----------
+    box_confidence : torch.Tensor
+        Object confidence
+        shape [batch_size, num_anchors, 1, conv_height, conv_width]
+    boxes : torch.Tensor
+        boxes in format x_min, y_min, x_max, y_max
+        shape [batch_size, num_anchors, 4, conv_height, conv_width]
+
+    box_class_probs : TYPE
+        Class probalility
+        shape [batch_size, num_anchors, num_classes, conv_height, conv_width]
+    threshold : float, optional
+        Score threshold
+
+    Returns
+    -------
+    tuple[torch.Tensor, torch.Tensor, torch.Tensor]
+        Filtered boxes, scores, classes
+    """
+
+    box_scores = box_confidence * box_class_probs
+
+    box_classes = torch.argmax(box_scores, dim=2, keepdim=True)
+    print(box_classes.shape)
+    box_class_scores, _ = torch.max(box_scores, dim=2, keepdim=True)
+
+    prediction_mask = box_class_scores > threshold
+
+    classes = box_classes[prediction_mask]
+    boxes = boxes[prediction_mask.expand(boxes.shape)]
+    scores = box_class_scores[prediction_mask.expand(box_class_scores.shape)]
+
+    return boxes, scores, classes

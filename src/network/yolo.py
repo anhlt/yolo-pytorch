@@ -2,6 +2,7 @@ from .base import YoloBody, YoloHead
 from torch import nn
 import torch
 from ..config import IOU_THRESHOLD
+from ..utils.process_boxes import yolo_filter_boxes, boxes_to_cornels
 
 
 class Yolo(nn.Module):
@@ -28,6 +29,12 @@ class Yolo(nn.Module):
         # x = self.yolo_head(conv_features)
         return conv_features
 
+    def eval(self, yolo_output, image_shape, max_boxes=10, score_threshold=0.6, iou_threshold=0.5):
+        pred_confidence, pred_xy, pred_wh, pred_class_prob = self.yolo_head(yolo_output)
+        boxes = boxes_to_cornels(pred_xy, pred_wh)
+        boxes, scores, classes = yolo_filter_boxes(pred_confidence, boxes, pred_class_prob, score_threshold)
+        return boxes, scores, classes
+
     def loss(self, yolo_output: torch.Tensor, true_boxes: torch.Tensor, detectors_mask: torch.Tensor, matching_true_boxes: torch.Tensor):
         """Summary
 
@@ -51,8 +58,8 @@ class Yolo(nn.Module):
 
         pred_confidence, pred_xy, pred_wh, pred_class_prob = self.yolo_head(yolo_output)
         # pred_confidence : torch.Size([batch_size, num_anchors, 1, conv_height, conv_width])
-        # pred_wh : torch.Size([batch_size, num_anchors, 2, conv_height, conv_width])
         # pred_xy : torch.Size([batch_size, num_anchors, 2, conv_height, conv_width])
+        # pred_wh : torch.Size([batch_size, num_anchors, 2, conv_height, conv_width])
         # pred_class_prob : torch.Size([batch_size, num_anchors, 3, conv_height, conv_width])
 
         batch_size, conv_number_channels, feats_height, feats_width = yolo_output.shape
