@@ -3,7 +3,7 @@ from torch import nn
 import torch
 from ..config import IOU_THRESHOLD
 from ..utils.process_boxes import yolo_filter_boxes, boxes_to_cornels
-
+from ..utils import nms
 
 class Yolo(nn.Module):
     """docstring for Yolo"""
@@ -33,6 +33,14 @@ class Yolo(nn.Module):
         pred_confidence, pred_xy, pred_wh, pred_class_prob = self.yolo_head(yolo_output)
         boxes = boxes_to_cornels(pred_xy, pred_wh)
         boxes, scores, classes = yolo_filter_boxes(pred_confidence, boxes, pred_class_prob, score_threshold)
+
+        height = image_shape[0]
+        width = image_shape[1]
+
+        boxes = boxes * torch.Tensor([width, height, width, height])
+
+        nms_index = nms(boxes, scores, iou_threshold)
+
         return boxes, scores, classes
 
     def loss(self, yolo_output: torch.Tensor, true_boxes: torch.Tensor, detectors_mask: torch.Tensor, matching_true_boxes: torch.Tensor):
