@@ -11,18 +11,6 @@ except AttributeError:
 
 ext_modules = [
     Extension(
-        "cython_bbox",
-        ["bbox.pyx"],
-        extra_compile_args=["-Wno-cpp", "-Wno-unused-function"],
-        include_dirs=[numpy_include]
-    ),
-    Extension(
-        "cython_nms",
-        ["nms.pyx"],
-        extra_compile_args=["-Wno-cpp", "-Wno-unused-function"],
-        include_dirs=[numpy_include]
-    ),
-    Extension(
         "cython_process_boxes",
         ["process_boxes.pyx"],
         extra_compile_args=["-Wno-cpp", "-Wno-unused-function"],
