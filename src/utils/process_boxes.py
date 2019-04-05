@@ -115,9 +115,8 @@ def boxes_to_cornels(box_xy, box_wh):
     )
 
 
-def yolo_filter_boxes(box_confidence, boxes, box_class_probs, threshold=.1):
+def yolo_filter_boxes(box_confidence, boxes, box_class_probs, threshold=.6):
     """filter boxes that has score smaller than threshold
-    https://github.com/vietnguyen91/Yolo-v2-pytorch/blob/9589413b5dce0476eb9cccc41945cf30cf131b34/src/utils.py
     Parameters
     ----------
     box_confidence : torch.Tensor

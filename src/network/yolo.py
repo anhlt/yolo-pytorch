@@ -1,3 +1,5 @@
+"""Summary
+"""
 from .base import YoloBody, YoloHead
 from torch import nn
 import torch
@@ -5,10 +7,48 @@ from ..config import IOU_THRESHOLD
 from ..utils.process_boxes import yolo_filter_boxes, boxes_to_cornels
 from ..utils import nms
 
+
 class Yolo(nn.Module):
-    """docstring for Yolo"""
+    """docstring for Yolo
+
+    Attributes
+    ----------
+    anchors : TYPE
+        Description
+    class_scale : int
+        Description
+    classes : TYPE
+        Description
+    coordinates_scale : int
+        Description
+    iou_threshold : TYPE
+        Description
+    no_object_scale : int
+        Description
+    num_anchors : TYPE
+        Description
+    num_classes : TYPE
+        Description
+    object_scale : int
+        Description
+    yolo_body : TYPE
+        Description
+    yolo_head : TYPE
+        Description
+    """
 
     def __init__(self, anchors, classes, iou_threshold=IOU_THRESHOLD):
+        """Summary
+
+        Parameters
+        ----------
+        anchors : TYPE
+            Description
+        classes : TYPE
+            Description
+        iou_threshold : TYPE, optional
+            Description
+        """
         super(Yolo, self).__init__()
         self.num_anchors = anchors.shape[0]
         self.classes = classes
@@ -24,12 +64,44 @@ class Yolo(nn.Module):
         self.iou_threshold = iou_threshold
 
     def forward(self, x):
+        """Summary
+
+        Parameters
+        ----------
+        x : TYPE
+            Description
+
+        Returns
+        -------
+        TYPE
+            Description
+        """
         conv_features = self.yolo_body(x)
         # x = self.yolo_head(x)
         # x = self.yolo_head(conv_features)
         return conv_features
 
-    def eval(self, yolo_output, image_shape, max_boxes=10, score_threshold=0.6, iou_threshold=0.5):
+    def _eval(self, yolo_output, image_shape, max_boxes=10, score_threshold=0.6, iou_threshold=0.5):
+        """Summary
+
+        Parameters
+        ----------
+        yolo_output : TYPE
+            Description
+        image_shape : TYPE
+            Description
+        max_boxes : int, optional
+            Description
+        score_threshold : float, optional
+            Description
+        iou_threshold : float, optional
+            Description
+
+        Returns
+        -------
+        TYPE
+            Description
+        """
         pred_confidence, pred_xy, pred_wh, pred_class_prob = self.yolo_head(yolo_output)
         boxes = boxes_to_cornels(pred_xy, pred_wh)
         boxes, scores, classes = yolo_filter_boxes(pred_confidence, boxes, pred_class_prob, score_threshold)
@@ -38,13 +110,37 @@ class Yolo(nn.Module):
         width = image_shape[1]
 
         boxes = boxes * torch.Tensor([width, height, width, height])
-
         nms_index = nms(boxes, scores, iou_threshold)
+        boxes = boxes[nms_index]
+        scores = scores[nms_index]
+        classes = classes[nms_index]
+        return boxes, scores, classes
 
+    def predict(self, image, score_threshold=0.6, iou_threshold=0.5):
+        """Predict
+
+        Parameters
+        ----------
+        image : Image Tensor
+            Shape: (1, 3, heith, width)
+        score_threshold : float, optional
+            Description
+        iou_threshold : float, optional
+            Description
+
+        Returns
+        -------
+        TYPE
+            Description
+        """
+        self.eval()
+        yolo_output = self(image)
+        image_shape = image.shape[2:]
+        boxes, scores, classes = self._eval(yolo_output, image_shape, score_threshold=score_threshold, iou_threshold=iou_threshold)
         return boxes, scores, classes
 
     def loss(self, yolo_output: torch.Tensor, true_boxes: torch.Tensor, detectors_mask: torch.Tensor, matching_true_boxes: torch.Tensor):
-        """Summary
+        """Calculate loss
 
         Parameters
         ----------
@@ -60,6 +156,11 @@ class Yolo(nn.Module):
             Same shape as detectors_mask with the corresponding ground truth box
             adjusted for comparison with predicted parameters at training time.
             [batch_sizes, num_anchors, 4 + num_class, conv_height, conv_width]
+
+        Returns
+        -------
+        TYPE
+            Description
 
         """
         # classification loss

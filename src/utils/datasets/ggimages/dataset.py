@@ -81,9 +81,7 @@ class SingleOpenImage(data.Dataset):
 
         target_size = tuple(img.size)
         im_info = np.array(
-            [[float(target_size[0]),
-              float(target_size[1]),
-              min(target_size) / min(origin_size)]])
+            [float(target_size[0]), float(target_size[1]), target_size[0] / origin_size[0], target_size[1] / origin_size[1]])
 
         blobs['im_info'] = im_info
         blobs['im_name'] = os.path.basename(filename + ".jpg")
@@ -134,7 +132,9 @@ class OpenImage(data.Dataset):
         category, offset = find(self.sum_item, index + 1,
                                 0, len(self.sum_item) - 1)
         # logger.debug(category, offset)
-        return self.sub_class_dict[self.classes[category]][offset]
+        blobs = self.sub_class_dict[self.classes[category]][offset]
+        blobs['classes'] = self.classes
+        return blobs
 
     def __len__(self):
         return self.sum_item[-1]
