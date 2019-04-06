@@ -247,17 +247,18 @@ class YoloHead(nn.Module):
         x : torch.Tensor
             Convolution feature shape (batch, (5 + num_classes) * num_anchors, conv_height, conv_width)
         """
+        
         num_anchors = len(self.anchors)
         conv_height, conv_width = x.shape[2:4]
 
         x_shifts, y_shifts = torch.meshgrid([torch.arange(0, conv_width), torch.arange(0, conv_height)])
         shifts = torch.stack((y_shifts.flatten(), x_shifts.flatten())).transpose(1, 0).contiguous()
 
-        shifts = shifts.view((1, 1, 2, conv_height, conv_width)).type(torch.FloatTensor)
+        shifts = shifts.view((1, 1, 2, conv_height, conv_width)).float().to(x.device)
 
         x = x.view((-1, num_anchors, self.num_classes + 5, conv_height, conv_width))
-        anchors_tensor = self.anchors.view((1, num_anchors, 2, 1, 1)).type(torch.FloatTensor)
-        conv_dims = torch.tensor((conv_height, conv_width)).view(1, 1, 2, 1, 1).type(torch.FloatTensor)
+        anchors_tensor = self.anchors.view((1, num_anchors, 2, 1, 1)).float().to(x.device)
+        conv_dims = torch.tensor((conv_height, conv_width)).view(1, 1, 2, 1, 1).float().to(x.device)
 
         box_confidence = torch.sigmoid(x[:, :, 4:5, ...])
         box_xy = torch.sigmoid(x[:, :, :2, ...])
