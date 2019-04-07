@@ -48,8 +48,9 @@ def preprocess_true_boxes(true_boxes, anchors, image_size, num_classes):
 
         box = box[0:4] * np.array(
             [conv_width, conv_height, conv_width, conv_height])
-        i = np.floor(box[1]).astype('int')
-        j = min(np.floor(box[0]).astype('int'), 1)
+        i = min(height - 1,max(np.floor(box[1]).astype('int'), 0))
+        j = min(width - 1 ,max(np.floor(box[0]).astype('int'), 0))
+        
         best_iou = 0
         best_anchor = 0
 
@@ -75,7 +76,8 @@ def preprocess_true_boxes(true_boxes, anchors, image_size, num_classes):
             detectors_mask[best_anchor, :, i, j] = 1
             adjusted_box = np.array(
                 [
-                    box[0] - j, box[1] - i,
+                    box[0] - j,
+                    box[1] - i,
                     np.log(box[2] / anchors[best_anchor][0]),
                     np.log(box[3] / anchors[best_anchor][1])
                 ],
