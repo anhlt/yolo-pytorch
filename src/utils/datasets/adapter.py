@@ -28,7 +28,6 @@ def convert_data(blobs):
     img_name = []
     im_info = np.array([[batch_tensor.shape[2], batch_tensor.shape[3]]])
     batch_boxes = torch.zeros((current_batch_size, max_boxes, 5))
-
     detectors_mask = torch.zeros((current_batch_size, VOC_ANCHORS.shape[0], 1, batch_tensor.shape[2] // 32, batch_tensor.shape[3] // 32))
     matching_true_boxes = torch.zeros((current_batch_size, VOC_ANCHORS.shape[0], 4 + len(classes), batch_tensor.shape[2] // 32, batch_tensor.shape[3] // 32))
 
@@ -38,7 +37,7 @@ def convert_data(blobs):
         current_boxes = blob['boxes']
 
         current_boxes = np.hstack((current_boxes, gt_classes[:, np.newaxis]))
-        current_detectors_mask, current_matching_true_boxes = preprocess_true_boxes(current_boxes, VOC_ANCHORS, (608, 608), len(blob['classes']))
+        current_detectors_mask, current_matching_true_boxes = preprocess_true_boxes(current_boxes, VOC_ANCHORS, (batch_tensor.shape[2], batch_tensor.shape[3]), len(blob['classes']))
         batch_tensor[i, :, :shape[1], :shape[2]] = blob['tensor']
         total_boxes = current_boxes.shape[0]
         detectors_mask[i] = torch.Tensor(current_detectors_mask)

@@ -247,7 +247,7 @@ class YoloHead(nn.Module):
         x : torch.Tensor
             Convolution feature shape (batch, (5 + num_classes) * num_anchors, conv_height, conv_width)
         """
-        
+
         num_anchors = len(self.anchors)
         conv_height, conv_width = x.shape[2:4]
 
@@ -262,10 +262,10 @@ class YoloHead(nn.Module):
 
         box_confidence = torch.sigmoid(x[:, :, 4:5, ...])
         box_xy = torch.sigmoid(x[:, :, :2, ...])
-        box_wh = x[:, :, 2:4, ...]
+        box_wh = torch.exp(x[:, :, 2:4, ...])
         box_class_probs = F.softmax(x[:, :, 5:, ...], dim=2)
 
         box_xy = (box_xy + shifts) / conv_dims
-        box_wh = (box_wh * anchors_tensor) / conv_dims
+        box_wh = box_wh * anchors_tensor / conv_dims
 
         return box_confidence, box_xy, box_wh, box_class_probs

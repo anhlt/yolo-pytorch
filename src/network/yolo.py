@@ -182,7 +182,6 @@ class Yolo(nn.Module):
 
         pred_xy = pred_xy.unsqueeze(2)  # batch_size, num_anchors, 1 , 2, conv_height, conv_width
         pred_wh = pred_wh.unsqueeze(2)  # batch_size, num_anchors, 1 , 2, conv_height, conv_width
-
         pred_wh_mid_point = pred_wh / 2
         pred_min = pred_xy - pred_wh_mid_point
         pred_max = pred_xy + pred_wh_mid_point
@@ -198,25 +197,30 @@ class Yolo(nn.Module):
         true_max = true_xy + true_wh_mid_point
         true_min = true_xy - true_wh_mid_point
 
-        intersect_min = torch.min(true_min, pred_min)
-        intersect_max = torch.max(true_max, pred_max)
+        intersect_min = torch.max(true_min, pred_min)
+        intersect_max = torch.min(true_max, pred_max)
         intersect_wh = (intersect_max - intersect_min).clamp(min=0)
+
         intersect_areas = intersect_wh[:, :, :, 0, ...] * intersect_wh[:, :, :, 1, ...]
 
         pred_areas = pred_wh[:, :, :, 0, ...] * pred_wh[:, :, :, 1, ...]
         true_areas = true_wh[:, :, :, 0, ...] * true_wh[:, :, :, 1, ...]
 
+
+
         union_areas = pred_areas + true_areas - intersect_areas
         iou_scores = intersect_areas / union_areas  # torch.Size([batch_size, num_anchors, num_true_boxes, conv_height, conv_width])
         best_iou, best_iou_index = torch.max(iou_scores, dim=2, keepdim=True)
+
         # torch.Size([batch_size, num_anchors, 1, conv_height, conv_width])
 
-        object_mask = (best_iou > self.iou_threshold).type(torch.FloatTensor)         # torch.Size([batch_size, num_anchors, 1, conv_height, conv_width])
+        object_mask = (best_iou > self.iou_threshold).float().to(yolo_output.device)         # torch.Size([batch_size, num_anchors, 1, conv_height, conv_width])
 
         no_object_weigth = self.no_object_scale * (1 - object_mask) * (1 - detectors_mask)
         no_object_loss = no_object_weigth * ((- pred_confidence) ** 2)
 
         object_loss = self.object_scale * detectors_mask * ((best_iou - pred_confidence) ** 2)
+
 
         confidence_loss = object_loss + no_object_loss
 
@@ -226,7 +230,7 @@ class Yolo(nn.Module):
 
         matching_boxes = matching_true_boxes[:, :, 0:4, ...]
 
-        coordinates_loss = self.coordinates_scale * detectors_mask * (matching_boxes - pred_boxes) ** 2
+        coordinates_loss = self.coordinates_scale * ((matching_boxes * detectors_mask  - pred_boxes * detectors_mask) ** 2)
 
         total_loss = 0.5 * (confidence_loss.sum() + classification_loss.sum() + coordinates_loss.sum()) / batch_size
 
