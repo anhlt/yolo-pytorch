@@ -103,7 +103,7 @@ class Yolo(nn.Module):
             Description
         """
         pred_confidence, pred_xy, pred_wh, pred_class_prob = self.yolo_head(yolo_output)
-        boxes = boxes_to_cornels(pred_xy, pred_wh)
+        boxes = boxes_to_cornels(pred_xy, pred_wh).to(yolo_output.device)
         boxes, scores, classes = yolo_filter_boxes(pred_confidence, boxes, pred_class_prob, score_threshold)
 
         height = image_shape[0]
