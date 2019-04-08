@@ -103,13 +103,13 @@ class Yolo(nn.Module):
             Description
         """
         pred_confidence, pred_xy, pred_wh, pred_class_prob = self.yolo_head(yolo_output)
-        boxes = boxes_to_cornels(pred_xy, pred_wh).to(yolo_output.device)
+        boxes = boxes_to_cornels(pred_xy, pred_wh)
         boxes, scores, classes = yolo_filter_boxes(pred_confidence, boxes, pred_class_prob, score_threshold)
 
         height = image_shape[0]
         width = image_shape[1]
 
-        boxes = boxes * torch.Tensor([width, height, width, height])
+        boxes = boxes * torch.Tensor([width, height, width, height]).to(yolo_output.device)
         nms_index = nms(boxes, scores, iou_threshold)
         boxes = boxes[nms_index]
         scores = scores[nms_index]
