@@ -16,3 +16,7 @@ VOC_ANCHORS = np.array(
      (7.88282, 3.52778), (9.77052, 9.16828)))
 
 IOU_THRESHOLD = 0.6
+
+LOG_PATH = os.path.join(ROOT_DIR, 'logs')
+
+TENSORBOARD_PATH = os.path.join(ROOT_DIR, 'tensorboard_logs')

@@ -1,7 +1,7 @@
 from logging.config import dictConfig
 import os
+from .config import LOG_PATH
 
-current_path = os.path.dirname(os.path.realpath(__file__))
 
 d = {
     'version': 1,
@@ -18,13 +18,13 @@ d = {
         },
         'file': {
             'class': 'logging.FileHandler',
-            'filename': os.path.join(current_path, 'logs', 'server.log'),
+            'filename': os.path.join(LOG_PATH, 'server.log'),
             'mode': 'a',
             'formatter': 'detailed',
         },
         'errors': {
             'class': 'logging.FileHandler',
-            'filename': os.path.join(current_path, 'logs', 'server_errors.log'),
+            'filename': os.path.join(LOG_PATH, 'server_errors.log'),
             'mode': 'w',
             'level': 'ERROR',
             'formatter': 'detailed',
@@ -43,3 +43,7 @@ d = {
 }
 
 dictConfig(d)
+
+
+
+
