@@ -180,8 +180,8 @@ class Yolo(nn.Module):
 
         # batch, num_anchors, num_true_boxes, box_params, conv_height, conv_width
 
-        pred_xy = pred_xy.unsqueeze(2)  # batch_size, num_anchors, 1 , 2, conv_height, conv_width
-        pred_wh = pred_wh.unsqueeze(2)  # batch_size, num_anchors, 1 , 2, conv_height, conv_width
+        pred_xy = pred_xy.unsqueeze(2).detach()  # batch_size, num_anchors, 1 , 2, conv_height, conv_width
+        pred_wh = pred_wh.unsqueeze(2).detach()  # batch_size, num_anchors, 1 , 2, conv_height, conv_width
         pred_wh_mid_point = pred_wh / 2
         pred_min = pred_xy - pred_wh_mid_point
         pred_max = pred_xy + pred_wh_mid_point
