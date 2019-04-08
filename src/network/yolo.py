@@ -228,7 +228,7 @@ class Yolo(nn.Module):
 
         matching_boxes = matching_true_boxes[:, :, 0:4, ...]
 
-        classification_loss = nn.MSELoss(size_average=False)(self.coordinates_scale * detectors_mask * matching_boxes, self.class_scale * detectors_mask * pred_boxes)
+        coordinates_loss = nn.MSELoss(size_average=False)(self.coordinates_scale * detectors_mask * matching_boxes, self.class_scale * detectors_mask * pred_boxes)
 
         total_loss = object_loss + no_object_loss + classification_loss + coordinates_loss
 
