@@ -252,7 +252,7 @@ class YoloHead(nn.Module):
         conv_height, conv_width = x.shape[2:4]
 
         x_shifts, y_shifts = torch.meshgrid([torch.arange(0, conv_width), torch.arange(0, conv_height)])
-        shifts = torch.stack((y_shifts.flatten(), x_shifts.flatten())).transpose(1, 0).contiguous()
+        shifts = torch.stack((y_shifts.flatten(), x_shifts.flatten())).contiguous()
 
         shifts = shifts.view((1, 1, 2, conv_height, conv_width)).float().to(x.device)
 

@@ -1,0 +1,3 @@
+FROM tensorflow/tensorflow
+
+RUN pip install tensorboard

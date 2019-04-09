@@ -215,3 +215,4 @@ venv.bak/
 
 # sftp configuration file
 sftp-config.json
+tensorboard_logs
