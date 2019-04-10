@@ -10,6 +10,7 @@ services:
             - "8889:8889"
         volumes:
             - ".:/data"
+        ipc: host
         user: anh
         working_dir: /data
         tty: true

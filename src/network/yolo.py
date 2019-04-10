@@ -54,8 +54,8 @@ class Yolo(nn.Module):
         self.classes = classes
         self.num_classes = len(classes)
         self.anchors = torch.from_numpy(anchors)
-        self.yolo_body = YoloBody(num_anchors=self.num_anchors, num_classes=len(classes))
-        self.yolo_head = YoloHead(self.anchors, len(classes))
+        self.yolo_body = nn.DataParallel(YoloBody(num_anchors=self.num_anchors, num_classes=len(classes)))
+        self.yolo_head = nn.DataParallel(YoloHead(self.anchors, len(classes)))
 
         self.object_scale = 5
         self.no_object_scale = 1
@@ -150,12 +150,12 @@ class Yolo(nn.Module):
             Ground truth boxes tensor with shape [batch, num_true_boxes, 5]
             containing box x_center, y_center, width, height, and class.
         detectors_mask : torch.Tensor
-            0/1 mask for detectors in [batch_sizes, num_anchors, 1, conv_height, conv_width]
+            0/1 mask for detectors in [batch_size, num_anchors, 1, conv_height, conv_width]
             that should be compared with a matching ground truth box.
         matching_true_boxes : torch.Tensor
             Same shape as detectors_mask with the corresponding ground truth box
             adjusted for comparison with predicted parameters at training time.
-            [batch_sizes, num_anchors, 4 + num_class, conv_height, conv_width]
+            [batch_size, num_anchors, 4 + num_class, conv_height, conv_width]
 
         Returns
         -------
@@ -172,6 +172,7 @@ class Yolo(nn.Module):
         # pred_class_prob : torch.Size([batch_size, num_anchors, 3, conv_height, conv_width])
 
         batch_size, conv_number_channels, feats_height, feats_width = yolo_output.shape
+        _, num_true_boxes, _ = true_boxes.shape
         feats = yolo_output.view((-1, self.num_anchors, self.num_classes + 5, feats_height, feats_width))
 
         box_xy = torch.sigmoid(feats[:, :, :2, ...])
@@ -217,7 +218,7 @@ class Yolo(nn.Module):
         no_object_weigth = self.no_object_scale * (1 - object_mask) * (1 - detectors_mask)
 
         no_object_loss = nn.MSELoss(size_average=False)(torch.zeros_like(pred_confidence), no_object_weigth * pred_confidence)
-        object_loss = nn.MSELoss(size_average=False)(self.object_scale * detectors_mask, self.object_scale * detectors_mask * pred_confidence)
+        object_loss = nn.MSELoss(size_average=False)(self.object_scale * detectors_mask * best_iou, self.object_scale * detectors_mask * pred_confidence)
 
         matching_classes = matching_true_boxes[:, :, 4:, ...]
 
@@ -227,6 +228,6 @@ class Yolo(nn.Module):
 
         coordinates_loss = nn.MSELoss(size_average=False)(self.coordinates_scale * detectors_mask * matching_boxes, self.class_scale * detectors_mask * pred_boxes)
 
-        total_loss = object_loss + no_object_loss + classification_loss + coordinates_loss
+        total_loss = (object_loss + no_object_loss + classification_loss + coordinates_loss) / (batch_size * num_true_boxes)
 
         return total_loss
