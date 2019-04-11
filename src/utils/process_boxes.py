@@ -48,8 +48,8 @@ def preprocess_true_boxes(true_boxes, anchors, image_size, num_classes):
 
         box = box[0:4] * np.array(
             [conv_width, conv_height, conv_width, conv_height])
-        i = min(height - 1, max(np.floor(box[1]).astype('int'), 0))
-        j = min(width - 1, max(np.floor(box[0]).astype('int'), 0))
+        i = min(conv_height - 1, max(np.floor(box[1]).astype('int'), 0))
+        j = min(conv_width - 1, max(np.floor(box[0]).astype('int'), 0))
         best_iou = 0
         best_anchor = 0
 
