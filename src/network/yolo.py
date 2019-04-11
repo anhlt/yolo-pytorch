@@ -6,6 +6,9 @@ import torch
 from ..config import IOU_THRESHOLD
 from ..utils.process_boxes import yolo_filter_boxes, boxes_to_cornels
 from ..utils import nms
+from ..utils.datasets.transform import Resize, Compose
+import torchvision.transforms as transforms
+from PIL import Image
 
 
 class Yolo(nn.Module):
@@ -134,8 +137,9 @@ class Yolo(nn.Module):
             Description
         """
         self.eval()
-        yolo_output = self(image)
-        image_shape = image.shape[2:]
+        image_tensor = self.get_image_blob(image)
+        yolo_output = self(image_tensor)
+        image_shape = image_tensor.shape[2:]
         boxes, scores, classes = self._eval(yolo_output, image_shape, score_threshold=score_threshold, iou_threshold=iou_threshold)
         return boxes, scores, classes
 
@@ -231,3 +235,31 @@ class Yolo(nn.Module):
         total_loss = (object_loss + no_object_loss + classification_loss + coordinates_loss) / (batch_size * num_true_boxes)
 
         return total_loss
+
+    def get_image_blob(self, im):
+        """Converts an image into a network input.
+
+        Parameters
+        ----------
+        im : ndarray
+            a color image in BGR order
+
+        Returns
+        -------
+        blob : ndarray
+            a data blob holding an image pyramid
+        im_scale_factors : list
+            list of image scales (relative to im) used
+            in the image pyramid
+        """
+        transform = transforms.Compose([
+            transforms.Resize((448, 448)),
+            transforms.ToTensor(),
+            transforms.Normalize([0.485, 0.456, 0.406], [
+                0.229, 0.224, 0.225])])
+
+        img = Image.open(im).convert('RGB')
+        img = transform(img)
+        img = img.unsqueeze(0)
+
+        return img

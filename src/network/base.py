@@ -23,7 +23,6 @@ class Conv2d(nn.Module):
         nn.init.xavier_normal_(self.conv.weight)
         self.bn = nn.BatchNorm2d(
             out_channels, eps=0.001,
-            momentum=0,
             affine=True
         ) if bn else None
         self.relu = nn.LeakyReLU(negative_slope=0.1) if relu else None
