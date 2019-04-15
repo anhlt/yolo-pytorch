@@ -26,8 +26,7 @@ RUN /opt/conda/bin/conda install conda-build && \
 
 ENV PATH /opt/conda/envs/pytorch/bin:$PATH
 
-RUN conda install -y --name pytorch pytorch torchvision -c pytorch
-RUN conda install -y --name pytorch seaborn opencv cython
+RUN conda install -y --name pytorch pytorch torchvision cudatoolkit=9.0 -c pytorch
 RUN conda install -y --name pytorch -c anaconda protobuf
 
 RUN useradd -ms /bin/bash anh
@@ -36,5 +35,3 @@ RUN useradd -ms /bin/bash anh
 WORKDIR /tmp/
 ADD ./requirements.txt /tmp/requirements.txt
 RUN pip install -r requirements.txt
-RUN conda install -y --name pytorch line_profiler
-
