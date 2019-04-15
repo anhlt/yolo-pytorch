@@ -2,3 +2,4 @@ tensorboardX
 jupyter
 nose
 jupyterlab
+matplotlib
