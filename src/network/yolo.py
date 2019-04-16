@@ -6,7 +6,6 @@ import torch
 from ..config import IOU_THRESHOLD
 from ..utils.process_boxes import yolo_filter_boxes, boxes_to_cornels
 from ..utils import nms
-from ..utils.datasets.transform import Resize, Compose
 import torchvision.transforms as transforms
 from PIL import Image
 
