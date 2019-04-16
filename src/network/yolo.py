@@ -57,8 +57,11 @@ class Yolo(nn.Module):
         self.classes = classes
         self.num_classes = len(classes)
         self.anchors = torch.from_numpy(anchors)
-        self.yolo_body = nn.DataParallel(YoloBody(num_anchors=self.num_anchors, num_classes=len(classes)))
-        self.yolo_head = nn.DataParallel(YoloHead(self.anchors, len(classes)))
+        self.yolo_body = YoloBody(num_anchors=self.num_anchors, num_classes=len(classes))
+        self.yolo_body = nn.DataParallel(self.yolo_body)
+
+        self.yolo_head = YoloHead(self.anchors, len(classes))
+        self.yolo_head = nn.DataParallel(self.yolo_head)
 
         self.object_scale = 5
         self.no_object_scale = 1
@@ -137,11 +140,12 @@ class Yolo(nn.Module):
             Description
         """
         self.eval()
-        image_tensor = self.get_image_blob(image)
+        image_tensor, ratio = self.get_image_blob(image)
         yolo_output = self(image_tensor)
         image_shape = image_tensor.shape[2:]
         boxes, scores, classes = self._eval(yolo_output, image_shape, score_threshold=score_threshold, iou_threshold=iou_threshold)
-        return boxes, scores, classes
+        boxes = boxes.clamp(0, image_shape[0]).cpu() / torch.Tensor([ratio[0], ratio[1], ratio[0], ratio[1]])
+        return boxes, scores.cpu(), classes.cpu()
 
     def loss(self, yolo_output: torch.Tensor, true_boxes: torch.Tensor, detectors_mask: torch.Tensor, matching_true_boxes: torch.Tensor):
         """Calculate loss
@@ -254,12 +258,13 @@ class Yolo(nn.Module):
         """
         transform = transforms.Compose([
             transforms.Resize((448, 448)),
-            transforms.ToTensor(),
-            transforms.Normalize([0.485, 0.456, 0.406], [
-                0.229, 0.224, 0.225])])
+            transforms.ToTensor()])
 
         img = Image.open(im).convert('RGB')
+        image_size = img.size
         img = transform(img)
         img = img.unsqueeze(0)
 
-        return img
+        ratio = (448 / image_size[0], 448 / image_size[1])
+
+        return img, ratio

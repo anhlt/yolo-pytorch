@@ -1,2 +1,5 @@
 .git
 data
+tensorboard_logs
+*.pth
+test_img
