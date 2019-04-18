@@ -25,6 +25,8 @@ RUN /opt/conda/bin/conda install conda-build && \
 ENV PATH /opt/conda/envs/pytorch/bin:$PATH
 
 RUN conda install -y --name pytorch pytorch-cpu torchvision -c pytorch
+RUN conda install -y --name pytorch -c anaconda protobuf
+
 
 RUN useradd -ms /bin/bash anh
 
