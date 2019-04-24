@@ -20,7 +20,6 @@ else:
     import xml.etree.ElementTree as ET
 logging.basicConfig()
 logger = logging.getLogger('base_logger')
-logger.setLevel(logging.DEBUG)
 
 __all__ = ['VOCDetection']
 
@@ -88,15 +87,23 @@ class VOCDetection(data.Dataset):
 
         with open(self._imgsetpath % self.image_set) as f:
             ids = f.readlines()
+            logger.debug("Dataset: %s %s" % (self.dataset_name, ",".join(ids)))
 
         self.ids = []
         for id in ids:
-            striped_strings = id.strip().split()
-            if len(striped_strings) == 2:
-                self.ids.append(striped_strings[0])
+            striped_strings = id.strip()
+            last_space_position = striped_strings.rfind(" ")
+            file_name = striped_strings[:last_space_position]
+            if last_space_position > 0:
+                self.ids.append(file_name)
 
     def __getitem__(self, index):
-        img_id = self.ids[index % len(self.ids)]
+        try:
+            img_id = self.ids[index % len(self.ids)]
+        except Exception as e:
+            logger.error("%d %s" % (index, self.image_set))
+            logger.error(self.ids)
+            return None
 
         try:
             target = ET.parse(self._annopath % img_id).getroot()
@@ -147,19 +154,19 @@ class VOCDetection(data.Dataset):
                 img, gt_boxes = self.general_transform(img, gt_boxes)
 
             blobs = {}
+
+            filename = os.path.basename(self._imgpath % img_id)
+            blobs['full_im_path'] = self._imgpath % img_id
+
             blobs['gt_classes'] = gt_classes
-            # blobs['boxes'] = gt_boxes * im_info[0][2]
-            # blobs['tensor'] = img
             blobs['boxes'] = gt_boxes
             blobs['tensor'] = self.transform(img)
 
             target_size = tuple(img.size)
             im_info = np.array(
-                [[float(target_size[0]), float(target_size[1]), min(target_size) / min(origin_size)]])
-
+                [float(target_size[0]), float(target_size[1]), target_size[0] / origin_size[0], target_size[1] / origin_size[1]])
             blobs['im_info'] = im_info
-            blobs['im_name'] = os.path.basename(self._imgpath % img_id)
-            blobs['full_im_path'] = self._imgpath % img_id
+            blobs['im_name'] = os.path.basename(filename + ".jpg")
 
             return blobs
         else:
