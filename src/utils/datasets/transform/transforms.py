@@ -103,8 +103,7 @@ class XyToCenter(object):
         return img, converted_bboxes / [image_width, image_height, image_width, image_height]
 
     def __repr__(self):
-        interpolate_str = _pil_interpolation_to_str[self.interpolation]
-        return self.__class__.__name__ + '(size={0}, interpolation={1})'.format(self.size, interpolate_str)
+        return self.__class__.__name__
 
 
 class RandomHorizontalFlip(object):

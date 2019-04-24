@@ -3,3 +3,4 @@ data
 tensorboard_logs
 *.pth
 test_img
+save_model
