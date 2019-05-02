@@ -26,7 +26,7 @@ RUN /opt/conda/bin/conda install conda-build && \
 
 ENV PATH /opt/conda/envs/pytorch/bin:$PATH
 
-RUN conda install -y --name pytorch pytorch torchvision cudatoolkit=9.0 -c pytorch
+RUN conda install -y --name pytorch pytorch=1.1.0 torchvision cudatoolkit=9.0 -c pytorch
 RUN conda install -y --name pytorch -c anaconda protobuf
 
 RUN useradd -ms /bin/bash anh
