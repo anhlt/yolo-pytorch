@@ -38,4 +38,5 @@ RUN pip install -r requirements.txt
 
 RUN conda install --name pytorch -c conda-forge libjpeg-turbo
 RUN CC="cc -mavx2" pip install --no-cache-dir -U --force-reinstall pillow-simd
-RUN conda install -y --name pytorch jpeg libtiff
+RUN conda install -y --name pytorch jpeg libtiff nodejs
+RUN jupyter labextension install jupyterlab-jupytext
