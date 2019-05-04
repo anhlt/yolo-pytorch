@@ -108,6 +108,8 @@ data/
 
 # Temporary data
 .ipynb_checkpoints/
+notebooks/*.ipynb
+
 
 
 ###Python###
