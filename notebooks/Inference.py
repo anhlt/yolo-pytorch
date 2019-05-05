@@ -43,3 +43,5 @@ with torch.no_grad():
     img = Image.open(img_path)
     boxes, scores, classes = model.predict(img_path, score_threshold=0.3, iou_threshold=0.2)
 result_show(img, boxes, classes, scores,  ['__background__', 'Tree', 'Car', 'Flower'])
+
+
