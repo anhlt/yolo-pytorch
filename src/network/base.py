@@ -2,6 +2,7 @@ from torch import nn
 from torch.nn import MaxPool2d
 import torch
 import torch.nn.functional as F
+from collections import OrderedDict
 
 
 class Conv2d(nn.Module):
@@ -81,26 +82,21 @@ class DarknetBodyBottom(nn.Module):
 
     def __init__(self, **kwargs):
         super(DarknetBodyBottom, self).__init__()
-        self.first_layer = Conv2d(3, 32, 3, **kwargs)
-        self.second_layer = MaxPool2d(2)
-        self.third_layer = Conv2d(32, 64, 3, **kwargs)
-        self.forth_layer = MaxPool2d(2)
-        self.fifth_layer = BottleneckBlock(64, 128, 64)
-        self.sixth_layer = MaxPool2d(2)
-        self.seventh_layer = BottleneckBlock(128, 256, 128)
-        self.eighth_layer = MaxPool2d(2)
-        self.nineth_layer = DoubleBottleneckBlock(256, 512, 256)
+
+        self.layers = nn.Sequential(
+            Conv2d(3, 32, 3, **kwargs),
+            MaxPool2d(2),
+            Conv2d(32, 64, 3, **kwargs),
+            MaxPool2d(2),
+            BottleneckBlock(64, 128, 64),
+            MaxPool2d(2),
+            BottleneckBlock(128, 256, 128),
+            MaxPool2d(2),
+            DoubleBottleneckBlock(256, 512, 256)
+        )
 
     def forward(self, x):
-        x = self.first_layer(x)
-        x = self.second_layer(x)
-        x = self.third_layer(x)
-        x = self.forth_layer(x)
-        x = self.fifth_layer(x)
-        x = self.sixth_layer(x)
-        x = self.seventh_layer(x)
-        x = self.eighth_layer(x)
-        x = self.nineth_layer(x)
+        x = self.layers(x)
         return x
 
 
@@ -110,13 +106,13 @@ class DarknetBodyHead(nn.Module):
     def __init__(self):
         super(DarknetBodyHead, self).__init__()
 
-        self.tenth_layer = MaxPool2d(2)
-        self.eleventh_layer = DoubleBottleneckBlock(512, 1024, 512)
+        self.layers = nn.Sequential(
+            MaxPool2d(2),
+            DoubleBottleneckBlock(512, 1024, 512)
+        )
 
     def forward(self, x):
-
-        x = self.tenth_layer(x)
-        x = self.eleventh_layer(x)
+        x = self.layers(x)
         return x
 
 
