@@ -27,7 +27,6 @@ from PIL import Image
 print("test")
 
 
-
 classes = ['__background__', 'Tree', 'Car', 'Flower']
 
 # +

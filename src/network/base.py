@@ -2,7 +2,6 @@ from torch import nn
 from torch.nn import MaxPool2d
 import torch
 import torch.nn.functional as F
-from collections import OrderedDict
 
 
 class Conv2d(nn.Module):
@@ -125,15 +124,12 @@ class DarknetBody(nn.Module):
             "same_padding": True,
             "bn": True
         }
-
-        self.body_bottom = DarknetBodyBottom(**kwargs)
-        self.body_head = DarknetBodyHead()
+        self.layers = nn.Sequential(
+            DarknetBodyBottom(**kwargs),
+            DarknetBodyHead())
 
     def forward(self, x):
-
-        x = self.body_bottom(x)
-        x = self.body_head(x)
-
+        x = self.layers(x)
         return x
 
 
@@ -142,16 +138,15 @@ class DarkNet(nn.Module):
 
     def __init__(self):
         super(DarkNet, self).__init__()
-        self.body = DarknetBody()
-        self.head = nn.Conv2d(1024, 1000, 1)
-        self.global_avg_pool = nn.AdaptiveAvgPool2d(1)
-        self.active = nn.Softmax(dim=1)
+        self.layers = nn.Sequential(
+            DarknetBody(),
+            nn.Conv2d(1024, 1000, 1),
+            nn.AdaptiveAvgPool2d(1),
+            nn.Softmax(dim=1)
+        )
 
     def forward(self, x):
-        x = self.body(x)
-        x = self.head(x)
-        x = self.global_avg_pool(x)
-        x = self.active(x)
+        x = self.layers(x)
         return x
 
 
@@ -264,3 +259,25 @@ class YoloHead(nn.Module):
         box_wh = box_wh * anchors_tensor / conv_dims
 
         return box_confidence, box_xy, box_wh, box_class_probs
+
+
+class Shortcut(nn.Module):
+
+    def __init__(self, from_layer=-3):
+        self.from_layer = from_layer
+
+    def forward(self):
+        pass
+
+
+class Yolo59(nn.Module):
+
+    def __init__(self, **kwargs):
+        self.layers = [
+            Conv2d(in_channels=3, out_channels=32, kernel_size=3, stride=1, **kwargs),
+            Conv2d(in_channels=32, out_channels=64, kernel_size=3, stride=2, **kwargs),
+            Conv2d(in_channels=64, out_channels=32, kernel_size=1, stride=1, **kwargs),
+            Conv2d(in_channels=32, out_channels=64, kernel_size=3, stride=1, **kwargs)
+            Shortcut(from_layer=-3),
+
+        ]
