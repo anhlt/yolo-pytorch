@@ -45,14 +45,14 @@ class BottleneckBlock(nn.Module):
         self.outer_filter = outer_filter
         self.bottleneck_filter = bottleneck_filter
 
-        self.first_layer = Conv2d(input_channels, outer_filter, 3, same_padding=True, bn=True)
-        self.second_layer = Conv2d(outer_filter, bottleneck_filter, 1, same_padding=True, bn=True)
-        self.third_layer = Conv2d(bottleneck_filter, outer_filter, 3, same_padding=True, bn=True)
+        self.layers = nn.Sequential(
+            Conv2d(input_channels, outer_filter, 3, same_padding=True, bn=True),
+            Conv2d(outer_filter, bottleneck_filter, 1, same_padding=True, bn=True),
+            Conv2d(bottleneck_filter, outer_filter, 3, same_padding=True, bn=True)
+        )
 
     def forward(self, x):
-        x = self.first_layer(x)
-        x = self.second_layer(x)
-        x = self.third_layer(x)
+        x = self.layers(x)
         return x
 
 
@@ -65,15 +65,35 @@ class DoubleBottleneckBlock(nn.Module):
         self.outer_filter = outer_filter
         self.bottleneck_filter = bottleneck_filter
 
-        self.first_layer = BottleneckBlock(input_channels, outer_filter, bottleneck_filter)
-        self.second_layer = Conv2d(outer_filter, bottleneck_filter, 1, same_padding=True, bn=True)
-        self.third_layer = Conv2d(bottleneck_filter, outer_filter, 3, same_padding=True, bn=True)
+        self.layers = nn.Sequential(
+            BottleneckBlock(input_channels, outer_filter, bottleneck_filter),
+            Conv2d(outer_filter, bottleneck_filter, 1, same_padding=True, bn=True),
+            Conv2d(bottleneck_filter, outer_filter, 3, same_padding=True, bn=True),
+        )
 
     def forward(self, x):
-        x = self.first_layer(x)
-        x = self.second_layer(x)
-        x = self.third_layer(x)
+        x = self.layers(x)
         return x
+
+
+class V3Block(nn.Module):
+    """docstring for V3Block"""
+
+    def __init__(self, input_channels: int, bottleneck_filter: int, **kwargs):
+        super(V3Block, self).__init__()
+        self.input_channels = input_channels
+        self.bottleneck_filter = bottleneck_filter
+
+        self.layers = nn.Sequential(
+            Conv2d(input_channels, bottleneck_filter, 1, same_padding=True, bn=True),
+            Conv2d(bottleneck_filter, input_channels, 3, same_padding=True, bn=True)
+        )
+
+    def forward(self, x):
+        x1 = self.layers(x)
+        out = x + x1
+
+        return out
 
 
 class DarknetBodyBottom(nn.Module):
@@ -261,23 +281,46 @@ class YoloHead(nn.Module):
         return box_confidence, box_xy, box_wh, box_class_probs
 
 
-class Shortcut(nn.Module):
+class Yolo53(nn.Module):
 
-    def __init__(self, from_layer=-3):
-        self.from_layer = from_layer
+    def __init__(self):
 
-    def forward(self):
-        pass
+        kwargs = {
+            'same_padding': True,
+            'bn': True
+        }
 
-
-class Yolo59(nn.Module):
-
-    def __init__(self, **kwargs):
-        self.layers = [
+        self.layers = nn.Sequential(
             Conv2d(in_channels=3, out_channels=32, kernel_size=3, stride=1, **kwargs),
             Conv2d(in_channels=32, out_channels=64, kernel_size=3, stride=2, **kwargs),
-            Conv2d(in_channels=64, out_channels=32, kernel_size=1, stride=1, **kwargs),
-            Conv2d(in_channels=32, out_channels=64, kernel_size=3, stride=1, **kwargs)
-            Shortcut(from_layer=-3),
+            V3Block(input_channels=64, bottleneck_filter=32, **kwargs),
+            Conv2d(in_channels=64, out_channels=128, kernel_size=3, stride=2, **kwargs),
+            V3Block(input_channels=128, bottleneck_filter=64, **kwargs),
+            V3Block(input_channels=128, bottleneck_filter=64, **kwargs),
+            Conv2d(in_channels=128, out_channels=256, kernel_size=3, stride=2, **kwargs),
+            V3Block(input_channels=256, bottleneck_filter=128, **kwargs),
+            V3Block(input_channels=256, bottleneck_filter=128, **kwargs),
+            V3Block(input_channels=256, bottleneck_filter=128, **kwargs),
+            V3Block(input_channels=256, bottleneck_filter=128, **kwargs),
+            V3Block(input_channels=256, bottleneck_filter=128, **kwargs),
+            V3Block(input_channels=256, bottleneck_filter=128, **kwargs),
+            V3Block(input_channels=256, bottleneck_filter=128, **kwargs),
+            V3Block(input_channels=256, bottleneck_filter=128, **kwargs),
+            Conv2d(in_channels=256, out_channels=512, kernel_size=3, stride=2, **kwargs),
+            V3Block(input_channels=512, bottleneck_filter=256, **kwargs),
+            V3Block(input_channels=512, bottleneck_filter=256, **kwargs),
+            V3Block(input_channels=512, bottleneck_filter=256, **kwargs),
+            V3Block(input_channels=512, bottleneck_filter=256, **kwargs),
+            V3Block(input_channels=512, bottleneck_filter=256, **kwargs),
+            V3Block(input_channels=512, bottleneck_filter=256, **kwargs),
+            V3Block(input_channels=512, bottleneck_filter=256, **kwargs),
+            V3Block(input_channels=512, bottleneck_filter=256, **kwargs),
+            Conv2d(in_channels=512, out_channels=1024, kernel_size=3, stride=2, **kwargs),
+            V3Block(input_channels=1024, bottleneck_filter=512, **kwargs),
+            V3Block(input_channels=1024, bottleneck_filter=512, **kwargs),
+            V3Block(input_channels=1024, bottleneck_filter=512, **kwargs),
+            V3Block(input_channels=1024, bottleneck_filter=512, **kwargs),
+        )
 
-        ]
+    def forward(self, x):
+        return self.layers(x)
