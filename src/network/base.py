@@ -281,46 +281,127 @@ class YoloHead(nn.Module):
         return box_confidence, box_xy, box_wh, box_class_probs
 
 
-class Yolo53(nn.Module):
+class Yolo53Bottom(nn.Module):
 
     def __init__(self):
-
+        super(Yolo53Bottom, self).__init__()
         kwargs = {
             'same_padding': True,
             'bn': True
         }
 
         self.layers = nn.Sequential(
-            Conv2d(in_channels=3, out_channels=32, kernel_size=3, stride=1, **kwargs),
-            Conv2d(in_channels=32, out_channels=64, kernel_size=3, stride=2, **kwargs),
-            V3Block(input_channels=64, bottleneck_filter=32, **kwargs),
-            Conv2d(in_channels=64, out_channels=128, kernel_size=3, stride=2, **kwargs),
-            V3Block(input_channels=128, bottleneck_filter=64, **kwargs),
-            V3Block(input_channels=128, bottleneck_filter=64, **kwargs),
-            Conv2d(in_channels=128, out_channels=256, kernel_size=3, stride=2, **kwargs),
-            V3Block(input_channels=256, bottleneck_filter=128, **kwargs),
-            V3Block(input_channels=256, bottleneck_filter=128, **kwargs),
-            V3Block(input_channels=256, bottleneck_filter=128, **kwargs),
-            V3Block(input_channels=256, bottleneck_filter=128, **kwargs),
-            V3Block(input_channels=256, bottleneck_filter=128, **kwargs),
-            V3Block(input_channels=256, bottleneck_filter=128, **kwargs),
-            V3Block(input_channels=256, bottleneck_filter=128, **kwargs),
-            V3Block(input_channels=256, bottleneck_filter=128, **kwargs),
-            Conv2d(in_channels=256, out_channels=512, kernel_size=3, stride=2, **kwargs),
-            V3Block(input_channels=512, bottleneck_filter=256, **kwargs),
-            V3Block(input_channels=512, bottleneck_filter=256, **kwargs),
-            V3Block(input_channels=512, bottleneck_filter=256, **kwargs),
-            V3Block(input_channels=512, bottleneck_filter=256, **kwargs),
-            V3Block(input_channels=512, bottleneck_filter=256, **kwargs),
-            V3Block(input_channels=512, bottleneck_filter=256, **kwargs),
-            V3Block(input_channels=512, bottleneck_filter=256, **kwargs),
-            V3Block(input_channels=512, bottleneck_filter=256, **kwargs),
-            Conv2d(in_channels=512, out_channels=1024, kernel_size=3, stride=2, **kwargs),
-            V3Block(input_channels=1024, bottleneck_filter=512, **kwargs),
-            V3Block(input_channels=1024, bottleneck_filter=512, **kwargs),
-            V3Block(input_channels=1024, bottleneck_filter=512, **kwargs),
-            V3Block(input_channels=1024, bottleneck_filter=512, **kwargs),
+            nn.Sequential(
+                Conv2d(in_channels=3, out_channels=32, kernel_size=3, stride=1, **kwargs),             # 416 x 416 x   3   ->   416 x 416 x  32
+                Conv2d(in_channels=32, out_channels=64, kernel_size=3, stride=2, **kwargs),            # 416 x 416 x  32   ->   208 x 208 x  64
+                V3Block(input_channels=64, bottleneck_filter=32, **kwargs),                            # 416 x 416 x  32   ->   208 x 208 x  64
+                Conv2d(in_channels=64, out_channels=128, kernel_size=3, stride=2, **kwargs),           # 208 x 208 x  64   ->   104 x 104 x 128
+                V3Block(input_channels=128, bottleneck_filter=64, **kwargs),                           # 104 x 104 x 128   ->   104 x 104 x 128
+                V3Block(input_channels=128, bottleneck_filter=64, **kwargs),                           # 104 x 104 x 128   ->   104 x 104 x 128
+                Conv2d(in_channels=128, out_channels=256, kernel_size=3, stride=2, **kwargs),          # 104 x 104 x 128   ->    52 x  52 x 256
+                V3Block(input_channels=256, bottleneck_filter=128, **kwargs),                          # 52 x  52 x 256    ->    52 x  52 x 256
+                V3Block(input_channels=256, bottleneck_filter=128, **kwargs),                          # 52 x  52 x 256    ->    52 x  52 x 256
+                V3Block(input_channels=256, bottleneck_filter=128, **kwargs),                          # 52 x  52 x 256    ->    52 x  52 x 256
+                V3Block(input_channels=256, bottleneck_filter=128, **kwargs),                          # 52 x  52 x 256    ->    52 x  52 x 256
+                V3Block(input_channels=256, bottleneck_filter=128, **kwargs),                          # 52 x  52 x 256    ->    52 x  52 x 256
+                V3Block(input_channels=256, bottleneck_filter=128, **kwargs),                          # 52 x  52 x 256    ->    52 x  52 x 256
+                V3Block(input_channels=256, bottleneck_filter=128, **kwargs),                          # 52 x  52 x 256    ->    52 x  52 x 256
+                V3Block(input_channels=256, bottleneck_filter=128, **kwargs),                          # 52 x  52 x 256    ->    52 x  52 x 256
+            ),
+            nn.Sequential(
+
+                Conv2d(in_channels=256, out_channels=512, kernel_size=3, stride=2, **kwargs),          # 52 x  52 x 256    ->    26 x  26 x 512
+                V3Block(input_channels=512, bottleneck_filter=256, **kwargs),                          # 26 x  26 x 512    ->    26 x  26 x 512
+                V3Block(input_channels=512, bottleneck_filter=256, **kwargs),                          # 26 x  26 x 512    ->    26 x  26 x 512
+                V3Block(input_channels=512, bottleneck_filter=256, **kwargs),                          # 26 x  26 x 512    ->    26 x  26 x 512
+                V3Block(input_channels=512, bottleneck_filter=256, **kwargs),                          # 26 x  26 x 512    ->    26 x  26 x 512
+                V3Block(input_channels=512, bottleneck_filter=256, **kwargs),                          # 26 x  26 x 512    ->    26 x  26 x 512
+                V3Block(input_channels=512, bottleneck_filter=256, **kwargs),                          # 26 x  26 x 512    ->    26 x  26 x 512
+                V3Block(input_channels=512, bottleneck_filter=256, **kwargs),                          # 26 x  26 x 512    ->    26 x  26 x 512
+                V3Block(input_channels=512, bottleneck_filter=256, **kwargs),                          # 26 x  26 x 512    ->    26 x  26 x 512
+            ),
+
+            nn.Sequential(
+                Conv2d(in_channels=512, out_channels=1024, kernel_size=3, stride=2, **kwargs),         # 26 x  26 x 512    ->    13 x  13 x1024
+                V3Block(input_channels=1024, bottleneck_filter=512, **kwargs),                         # 13 x  13 x1024    ->    13 x  13 x1024
+                V3Block(input_channels=1024, bottleneck_filter=512, **kwargs),                         # 13 x  13 x1024    ->    13 x  13 x1024
+                V3Block(input_channels=1024, bottleneck_filter=512, **kwargs),                         # 13 x  13 x1024    ->    13 x  13 x1024
+                V3Block(input_channels=1024, bottleneck_filter=512, **kwargs),                         # 13 x  13 x1024    ->    13 x  13 x1024
+
+                Conv2d(in_channels=1024, out_channels=512, kernel_size=1, stride=1, **kwargs),         # 13 x  13 x1024    ->    13 x  13 x 512
+                Conv2d(in_channels=512, out_channels=1024, kernel_size=3, stride=1, **kwargs),         # 13 x  13 x 512    ->    13 x  13 x1024
+                Conv2d(in_channels=1024, out_channels=512, kernel_size=1, stride=1, **kwargs),         # 13 x  13 x1024    ->    13 x  13 x 512
+                Conv2d(in_channels=512, out_channels=1024, kernel_size=3, stride=1, **kwargs),         # 13 x  13 x 512    ->    13 x  13 x1024
+                Conv2d(in_channels=1024, out_channels=512, kernel_size=1, stride=1, **kwargs),         # 13 x  13 x1024    ->    13 x  13 x 512   (Layer 79)
+            )
+        )
+
+    def forward(self, x):
+        current_result = []
+        for layer in self.layers:
+            x = layer(x)
+            current_result.append(x)
+        return tuple(current_result)
+
+
+class YoloV3Predict(nn.Module):
+
+    def __init__(self, in_channels: int, num_anchors: int, num_classes: int):
+        super(YoloV3Predict, self).__init__()
+        kwargs = {
+            'same_padding': True,
+            'bn': True
+        }
+
+        self.layers = nn.Sequential(
+            Conv2d(in_channels=in_channels, out_channels=in_channels * 2, kernel_size=3, stride=1, **kwargs),         # 13 x  13 x 512    ->    13 x  13 x1024
+            nn.Conv2d(in_channels * 2, num_anchors * (5 + num_classes), 1, 1, 0, bias=False)
         )
 
     def forward(self, x):
         return self.layers(x)
+
+
+class Yolo53Head(nn.Module):
+    """docstring for Yolo53Head"""
+
+    def __init__(self, num_anchors: int, num_classes: int):
+        super(Yolo53Head, self).__init__()
+        kwargs = {
+            'same_padding': True,
+            'bn': True
+        }
+
+        self.bottom = Yolo53Bottom()                                                                    # Layer 1 -> Layer 79
+        self.predict_1 = YoloV3Predict(512, num_anchors, num_classes)                                   # Layer 80 -> Layer 82
+
+        self.branch_1 = nn.Sequential(
+            Conv2d(in_channels=512, out_channels=256, kernel_size=1, stride=1, **kwargs),               # 13 x  13 x 512    ->    13 x  13 x 256 (Layer 84)
+            nn.Upsample(scale_factor=2),                                                                # 13 x  13 x 256    ->    26 x  26 x 256 (Layer 85)
+        )
+        self.branch_2 = nn.Sequential(
+            Conv2d(in_channels=768, out_channels=256, kernel_size=1, stride=1, **kwargs),               # 26 x  26 x 768    ->    26 x  26 x 256 (Layer 87)
+            Conv2d(in_channels=256, out_channels=512, kernel_size=3, stride=1, **kwargs),               # 26 x  26 x 256    ->    26 x  26 x 512 (Layer 88)
+            Conv2d(in_channels=512, out_channels=256, kernel_size=1, stride=1, **kwargs),               # 26 x  26 x 512    ->    26 x  26 x 256 (Layer 89)
+            Conv2d(in_channels=256, out_channels=512, kernel_size=3, stride=1, **kwargs),               # 26 x  26 x 256    ->    26 x  26 x 512 (Layer 90)
+            Conv2d(in_channels=512, out_channels=256, kernel_size=1, stride=1, **kwargs),               # 26 x  26 x 512    ->    26 x  26 x 256 (Layer 91)
+        )
+
+        self.predict_2 = YoloV3Predict(256, num_anchors, num_classes)                                   # Layer 92 -> Layer 94
+
+        # TODO: Insert Detection layer 2
+
+        self.branch_4 = nn.Sequential(
+            Conv2d(in_channels=256, out_channels=128, kernel_size=1, stride=1, **kwargs),               # 26 x  26 x 256->    26 x  26 x 128 (Layer 96)
+            nn.Upsample(scale_factor=2),                                                                # 26 x  26 x 128->    52 x  52 x 128 (Layer 97)
+        )
+
+        self.branch_5 = nn.Sequential(
+            Conv2d(in_channels=384, out_channels=128, kernel_size=1, stride=1, **kwargs),               # 52 x  52 x 384    ->    52 x  52 x 128 (Layer 99)
+            Conv2d(in_channels=128, out_channels=256, kernel_size=2, stride=1, **kwargs),               # 52 x  52 x 128    ->    52 x  52 x 256 (Layer 100)
+            Conv2d(in_channels=256, out_channels=128, kernel_size=1, stride=1, **kwargs),               # 52 x  52 x 256    ->    52 x  52 x 128 (Layer 101)
+            Conv2d(in_channels=128, out_channels=256, kernel_size=3, stride=1, **kwargs),               # 52 x  52 x 128    ->    52 x  52 x 256 (Layer 102)
+            Conv2d(in_channels=256, out_channels=128, kernel_size=1, stride=1, **kwargs),               # 52 x  52 x 256    ->    52 x  52 x 128 (Layer 103)
+        )
+
+        self.predict_3 = YoloV3Predict(128, num_anchors, num_classes)                                   # Layer 92 -> Layer 94
