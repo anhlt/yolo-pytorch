@@ -61,9 +61,9 @@ ds = OpenImage('/data/data/SmallDataset/', 'train', general_transform=general_tr
 train_data_loader = DataLoader(ds, batch_size=batch_size, shuffle=True, collate_fn=convert_data, num_workers=4, drop_last=True)
 
 # +
-from src.network.base import Yolo53
+from src.network.base import YoloV3Head
 
-model = Yolo53()
+model = YoloV3Head(3 , 3)
 model.cuda()
 model.train()
 print(1)

@@ -362,11 +362,11 @@ class YoloV3Predict(nn.Module):
         return self.layers(x)
 
 
-class Yolo53Head(nn.Module):
+class YoloV3Head(nn.Module):
     """docstring for Yolo53Head"""
 
     def __init__(self, num_anchors: int, num_classes: int):
-        super(Yolo53Head, self).__init__()
+        super(YoloV3Head, self).__init__()
         kwargs = {
             'same_padding': True,
             'bn': True
@@ -391,17 +391,30 @@ class Yolo53Head(nn.Module):
 
         # TODO: Insert Detection layer 2
 
-        self.branch_4 = nn.Sequential(
+        self.branch_3 = nn.Sequential(
             Conv2d(in_channels=256, out_channels=128, kernel_size=1, stride=1, **kwargs),               # 26 x  26 x 256->    26 x  26 x 128 (Layer 96)
             nn.Upsample(scale_factor=2),                                                                # 26 x  26 x 128->    52 x  52 x 128 (Layer 97)
         )
 
-        self.branch_5 = nn.Sequential(
+        self.branch_4 = nn.Sequential(
             Conv2d(in_channels=384, out_channels=128, kernel_size=1, stride=1, **kwargs),               # 52 x  52 x 384    ->    52 x  52 x 128 (Layer 99)
-            Conv2d(in_channels=128, out_channels=256, kernel_size=2, stride=1, **kwargs),               # 52 x  52 x 128    ->    52 x  52 x 256 (Layer 100)
+            Conv2d(in_channels=128, out_channels=256, kernel_size=3, stride=1, **kwargs),               # 52 x  52 x 128    ->    52 x  52 x 256 (Layer 100)
             Conv2d(in_channels=256, out_channels=128, kernel_size=1, stride=1, **kwargs),               # 52 x  52 x 256    ->    52 x  52 x 128 (Layer 101)
             Conv2d(in_channels=128, out_channels=256, kernel_size=3, stride=1, **kwargs),               # 52 x  52 x 128    ->    52 x  52 x 256 (Layer 102)
             Conv2d(in_channels=256, out_channels=128, kernel_size=1, stride=1, **kwargs),               # 52 x  52 x 256    ->    52 x  52 x 128 (Layer 103)
         )
 
         self.predict_3 = YoloV3Predict(128, num_anchors, num_classes)                                   # Layer 92 -> Layer 94
+
+    def forward(self, x):
+        out_36, out_61, out_79 = self.bottom(x)
+        predict_1 = self.predict_1(out_79)
+        out_85 = self.branch_1(out_79)
+        out_86 = torch.cat((out_85, out_61), 1)
+        out_91 = self.branch_2(out_86)
+        predict_2 = self.predict_2(out_91)
+        out_97 = self.branch_3(out_91)
+        out_98 = torch.cat((out_97, out_36), 1)
+        out_103 = self.branch_4(out_98)
+        predict_3 = self.predict_3(out_103)
+        return predict_1, predict_2, predict_3
