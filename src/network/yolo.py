@@ -1,6 +1,6 @@
 """Summary
 """
-from .base import YoloBody, YoloHead
+from .base import YoloV3Head, YoloHead
 from torch import nn
 import torch
 from ..config import IOU_THRESHOLD
@@ -8,6 +8,7 @@ from ..utils.process_boxes import yolo_filter_boxes, boxes_to_cornels
 from ..utils import nms
 import torchvision.transforms as transforms
 from PIL import Image
+from typing import Tuple
 
 
 class Yolo(nn.Module):
@@ -56,7 +57,7 @@ class Yolo(nn.Module):
         self.classes = classes
         self.num_classes = len(classes)
         self.anchors = torch.from_numpy(anchors)
-        self.yolo_body = YoloBody(num_anchors=self.num_anchors, num_classes=len(classes))
+        self.yolo_body = YoloV3Head(num_anchors=self.num_anchors, num_classes=len(classes))
         self.yolo_body = nn.DataParallel(self.yolo_body)
 
         self.yolo_head = YoloHead(self.anchors, len(classes))
@@ -86,15 +87,15 @@ class Yolo(nn.Module):
         # x = self.yolo_head(conv_features)
         return conv_features
 
-    def _eval(self, yolo_output, image_shape, max_boxes=10, score_threshold=0.6, iou_threshold=0.5):
+    def _eval(self, yolo_output: torch.Tensor, image_shape: Tuple[int, int], max_boxes: int =10, score_threshold: float=0.6, iou_threshold: float=0.5):
         """Summary
 
         Parameters
         ----------
-        yolo_output : TYPE
-            Description
-        image_shape : TYPE
-            Description
+        yolo_output : torch.Tensor
+            conv_features shape : (batch_size, num_anchors * (5 + num_classes), height, width)
+        image_shape : Tuple[int, int]
+            tuple of image shape
         max_boxes : int, optional
             Description
         score_threshold : float, optional

@@ -20,3 +20,5 @@ IOU_THRESHOLD = 0.6
 LOG_PATH = os.path.join(ROOT_DIR, 'logs')
 
 TENSORBOARD_PATH = os.path.join(ROOT_DIR, 'tensorboard_logs')
+
+RATIOS = [32, 16, 8]

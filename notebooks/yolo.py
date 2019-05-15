@@ -79,14 +79,11 @@ val_data_loader = DataLoader(ds_val, batch_size=batch_size , shuffle=True, colla
 print(ds.classes)
 print(len(ds))
 print(ds_val.classes)
-
-# +
-from src.network.base import DarkNet, DarknetBody, YoloBody
+# -
 
 model = Yolo(VOC_ANCHORS, ds.classes)
 model.cuda()
 model.train()
-# -
 
 # optimizer = SGD(model.parameters(), lr = 0.0001, momentum=0.9)
 optimizer = RMSprop(model.parameters(), lr=1e-5, momentum=0.9, weight_decay=0.005)

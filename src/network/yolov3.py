@@ -1,6 +1,6 @@
 """Summary
 """
-from .base import YoloBody, YoloHead
+from .base import YoloHead, YoloV3Head
 from torch import nn
 import torch
 from ..config import IOU_THRESHOLD
@@ -8,6 +8,8 @@ from ..utils.process_boxes import yolo_filter_boxes, boxes_to_cornels
 from ..utils import nms
 import torchvision.transforms as transforms
 from PIL import Image
+import logging
+logger = logging.getLogger("base_logger")
 
 
 class Yolo(nn.Module):
@@ -56,11 +58,10 @@ class Yolo(nn.Module):
         self.classes = classes
         self.num_classes = len(classes)
         self.anchors = torch.from_numpy(anchors)
-        self.yolo_body = YoloBody(num_anchors=self.num_anchors, num_classes=len(classes))
+        self.yolo_body = YoloV3Head(num_anchors=self.num_anchors, num_classes=len(classes))
         self.yolo_body = nn.DataParallel(self.yolo_body)
 
         self.yolo_head = YoloHead(self.anchors, len(classes))
-        self.yolo_head = nn.DataParallel(self.yolo_head)
 
         self.object_scale = 5
         self.no_object_scale = 1
@@ -68,7 +69,7 @@ class Yolo(nn.Module):
         self.coordinates_scale = 1
         self.iou_threshold = iou_threshold
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor):
         """Summary
 
         Parameters
@@ -227,7 +228,12 @@ class Yolo(nn.Module):
         no_object_loss = nn.MSELoss(size_average=False)(torch.zeros_like(pred_confidence), no_object_weigth * pred_confidence)
         object_loss = nn.MSELoss(size_average=False)(self.object_scale * detectors_mask * best_iou, self.object_scale * detectors_mask * pred_confidence)
 
+        logger.info(matching_true_boxes.shape)
+
         matching_classes = matching_true_boxes[:, :, 4:, ...]
+        logger.info(detectors_mask.shape)
+        logger.info(matching_classes.shape)
+        # logger.info(pred_class_prob.shape)
 
         classification_loss = nn.MSELoss(size_average=False)(self.class_scale * detectors_mask * matching_classes, self.class_scale * detectors_mask * pred_class_prob)
 
