@@ -225,21 +225,16 @@ class Yolo(nn.Module):
 
         no_object_weigth = self.no_object_scale * (1 - object_mask) * (1 - detectors_mask)
 
-        no_object_loss = nn.MSELoss(size_average=False)(torch.zeros_like(pred_confidence), no_object_weigth * pred_confidence)
-        object_loss = nn.MSELoss(size_average=False)(self.object_scale * detectors_mask * best_iou, self.object_scale * detectors_mask * pred_confidence)
-
-        logger.info(matching_true_boxes.shape)
+        no_object_loss = nn.MSELoss(reduction='sum')(torch.zeros_like(pred_confidence), no_object_weigth * pred_confidence)
+        object_loss = nn.MSELoss(reduction='sum')(self.object_scale * detectors_mask * best_iou, self.object_scale * detectors_mask * pred_confidence)
 
         matching_classes = matching_true_boxes[:, :, 4:, ...]
-        logger.info(detectors_mask.shape)
-        logger.info(matching_classes.shape)
-        # logger.info(pred_class_prob.shape)
 
-        classification_loss = nn.MSELoss(size_average=False)(self.class_scale * detectors_mask * matching_classes, self.class_scale * detectors_mask * pred_class_prob)
+        classification_loss = nn.MSELoss(reduction='sum')(self.class_scale * detectors_mask * matching_classes, self.class_scale * detectors_mask * pred_class_prob)
 
         matching_boxes = matching_true_boxes[:, :, 0:4, ...]
 
-        coordinates_loss = nn.MSELoss(size_average=False)(self.coordinates_scale * detectors_mask * matching_boxes, self.class_scale * detectors_mask * pred_boxes)
+        coordinates_loss = nn.MSELoss(reduction='sum')(self.coordinates_scale * detectors_mask * matching_boxes, self.class_scale * detectors_mask * pred_boxes)
 
         total_loss = (object_loss + no_object_loss + classification_loss + coordinates_loss) / (batch_size * num_true_boxes)
 
