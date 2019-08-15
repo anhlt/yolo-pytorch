@@ -4,6 +4,8 @@ services:
         build:
             context: .
             dockerfile: ./dockerfiles/Dockerfile-cpu
+        image: "tuananhbk/yolo:cpu"
+
         command: jupyter lab --ip=0.0.0.0 --port=8889 --NotebookApp.password='sha1:4018b457b8a9:84c65a176a549c58609c3cf38fa50b4b1b12b808'
     anaconda:
         image: "tuananhbk/yolo:cpu"
