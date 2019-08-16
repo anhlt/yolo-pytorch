@@ -30,7 +30,7 @@ class AttentionConv2d(nn.Module):
     def forward(self, x):
         N, C, H, W = x.shape
 
-        out = torch.empty((N, self.number_of_kernel * self.out_channels, H, W))
+        out = torch.empty((N, self.number_of_kernel * self.out_channels, H, W)).to(x.device)
 
         for key, kernel_size in enumerate(self.kernel_sizes):
             weight_unpadding = self.kernels_params["weight_unpadding_%d" % kernel_size]
@@ -130,7 +130,7 @@ class MultiHeadAttention(nn.Module):
         )
 
 
-class ConvAttention2DSize3(object):
+class ConvAttention2DSize3(nn.Module):
     """docstring for ConvAttention2D"""
 
     def __init__(self,
@@ -143,9 +143,9 @@ class ConvAttention2DSize3(object):
                  same_padding=True,
                  bn=False):
         super(ConvAttention2DSize3, self).__init__()
-
+        self.out_channels = out_channels
         self.number_of_kernel = len(kernel_sizes)
-        self.unfold = AttentionConv2d(in_channels, out_channels, kernel_sizes=kernel_sizes, same_padding=same_padding, stride=stride)
+        self.unfold = AttentionConv2d(in_channels, out_channels, kernel_sizes=kernel_sizes)
         self.multi_head_attention = MultiHeadAttention(out_channels, head_num)
         self.bn = nn.BatchNorm2d(
             out_channels, eps=0.001,
@@ -162,7 +162,7 @@ class ConvAttention2DSize3(object):
         return out[:, :self.out_channels, :, :]
 
 
-class ConvAttention2DSize5(object):
+class ConvAttention2DSize5(nn.Module):
     """docstring for ConvAttention2D"""
 
     def __init__(self,
@@ -174,8 +174,8 @@ class ConvAttention2DSize5(object):
                  relu=True,
                  same_padding=True,
                  bn=False):
-        super(ConvAttention2DSize3, self).__init__()
-
+        super(ConvAttention2DSize5, self).__init__()
+        self.out_channels = out_channels
         self.number_of_kernel = len(kernel_sizes)
         self.unfold = AttentionConv2d(in_channels, out_channels, kernel_sizes=kernel_sizes, same_padding=same_padding, stride=stride)
         self.multi_head_attention = MultiHeadAttention(out_channels, head_num)
