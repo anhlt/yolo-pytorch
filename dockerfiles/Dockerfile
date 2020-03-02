@@ -26,7 +26,7 @@ RUN /opt/conda/bin/conda install conda-build && \
 
 ENV PATH /opt/conda/envs/pytorch/bin:$PATH
 
-RUN conda install -y --name pytorch pytorch=1.1.0 torchvision cudatoolkit=9.0 -c pytorch
+RUN conda install -y --name pytorch pytorch=1.4 torchvision cudatoolkit=9.2 -c pytorch
 RUN conda install -y --name pytorch -c anaconda protobuf
 
 RUN useradd -ms /bin/bash anh
@@ -37,6 +37,6 @@ ADD ./requirements.txt /tmp/requirements.txt
 RUN pip install -r requirements.txt
 
 RUN conda install --name pytorch -c conda-forge libjpeg-turbo
-RUN CC="cc -mavx2" pip install --no-cache-dir -U --force-reinstall pillow-simd
+RUN CC="cc -mavx2" pip install --no-cache-dir -U --force-reinstall pillow-simd==7.0.0.post3
 RUN conda install -y --name pytorch jpeg libtiff nodejs
 RUN jupyter labextension install jupyterlab-jupytext

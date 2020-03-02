@@ -2,14 +2,14 @@ version: '2'
 services:
     python:
         build:
-            context: .
+            context: ../
             dockerfile: ./dockerfiles/Dockerfile
         container_name : yolo
         image: "tuananhbk/yolo:gpu"
         ports:
             - "8889:8889"
         volumes:
-            - ".:/data"
+            - "..:/data"
         ipc: host
         user: anh
         working_dir: /data
