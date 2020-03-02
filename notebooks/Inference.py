@@ -5,8 +5,8 @@
 #     text_representation:
 #       extension: .py
 #       format_name: light
-#       format_version: '1.4'
-#       jupytext_version: 1.1.1
+#       format_version: '1.5'
+#       jupytext_version: 1.3.4
 #   kernelspec:
 #     display_name: Python 3
 #     language: python
@@ -24,24 +24,20 @@ from src.network.yolo import Yolo
 from src.config import VOC_ANCHORS
 from PIL import Image
 
-print("test")
+classes = ['__background__', 'Plant', 'Flower', 'Tree']
 
-
-
-classes = ['__background__', 'Tree', 'Car', 'Flower']
 
 # +
 from src.network.base import DarkNet, DarknetBody, YoloBody
 
 model = Yolo(VOC_ANCHORS, classes)
 model.load_state_dict(torch.load('./save_model/model_16.pth'))
-model.cuda()
 # -
 
 with torch.no_grad():
-    img_path = './test_img/panji.jpg'
+    img_path = './data/example/gs5.jpg'
     img = Image.open(img_path)
-    boxes, scores, classes = model.predict(img_path, score_threshold=0.3, iou_threshold=0.2)
-result_show(img, boxes, classes, scores,  ['__background__', 'Tree', 'Car', 'Flower'])
+    boxes, scores, classes = model.predict(img_path, score_threshold=0.5, iou_threshold=0.2)
+result_show(img, boxes, classes, scores,  ['__background__', 'Plant', 'Flower', 'Tree'])
 
 
