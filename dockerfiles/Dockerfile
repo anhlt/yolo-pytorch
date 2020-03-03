@@ -17,26 +17,16 @@ RUN  rm -rf /var/lib/apt/lists/*
 RUN curl -o ~/miniconda.sh -O  https://repo.continuum.io/miniconda/Miniconda3-4.2.12-Linux-x86_64.sh  && \
      chmod +x ~/miniconda.sh && \
      ~/miniconda.sh -b -p /opt/conda
-
 RUN rm ~/miniconda.sh
-
-RUN /opt/conda/bin/conda install conda-build && \
-    /opt/conda/bin/conda create -y --name pytorch python=3.7 numpy pyyaml scipy ipython mkl&& \
-    /opt/conda/bin/conda clean -ya
-
-ENV PATH /opt/conda/envs/pytorch/bin:$PATH
-
-RUN conda install -y --name pytorch pytorch=1.4 torchvision cudatoolkit=9.2 -c pytorch
-RUN conda install -y --name pytorch -c anaconda protobuf
 
 RUN useradd -ms /bin/bash anh
 
-
 WORKDIR /tmp/
-ADD ./requirements.txt /tmp/requirements.txt
-RUN pip install -r requirements.txt
+ADD ./environment.yml /tmp/environment.yml
+RUN /opt/conda/bin/conda env create -f environment.yml
 
-RUN conda install --name pytorch -c conda-forge libjpeg-turbo
+ENV PATH /opt/conda/envs/pytorch/bin:$PATH
+
+
 RUN CC="cc -mavx2" pip install --no-cache-dir -U --force-reinstall pillow-simd==7.0.0.post3
-RUN conda install -y --name pytorch jpeg libtiff nodejs
 RUN jupyter labextension install jupyterlab-jupytext
