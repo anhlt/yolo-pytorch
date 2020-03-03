@@ -13,7 +13,6 @@ dependencies:
   - jpeg
   - libtiff
   - nodejs
-  - cudatoolkit=9.2
   - pip:
     - tensorboardX==1.6
     - jupyter==1.0.0

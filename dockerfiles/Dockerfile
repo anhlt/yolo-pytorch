@@ -28,5 +28,5 @@ RUN /opt/conda/bin/conda env create -f environment.yml
 ENV PATH /opt/conda/envs/pytorch/bin:$PATH
 
 
-RUN CC="cc -mavx2" pip install --no-cache-dir -U --force-reinstall pillow-simd==7.0.0.post3
+RUN CC="cc -mavx2" pip install --no-cache-dir -U --force-reinstall pillow-simd==6.2.2.post1
 RUN jupyter labextension install jupyterlab-jupytext
