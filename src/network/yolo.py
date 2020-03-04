@@ -168,8 +168,7 @@ class Yolo(nn.Module):
 
         batch_size, conv_number_channels, feats_height, feats_width = yolo_output.shape
         _, num_true_boxes, _ = true_boxes.shape
-        feats = yolo_output.view(
-            (-1, self.num_anchors, self.num_classes + 5, feats_height, feats_width))
+        feats = yolo_output.view((-1, self.num_anchors, self.num_classes + 5, feats_height, feats_width))
 
         box_xy = torch.sigmoid(feats[:, :, :2, ...])
         box_wh = feats[:, :, 2:4, ...]
@@ -177,10 +176,9 @@ class Yolo(nn.Module):
 
         # batch, num_anchors, num_true_boxes, box_params, conv_height, conv_width
 
-        # batch_size, num_anchors, 1 , 2, conv_height, conv_width
-        pred_xy = pred_xy.unsqueeze(2).detach()
-        # batch_size, num_anchors, 1 , 2, conv_height, conv_width
-        pred_wh = pred_wh.unsqueeze(2).detach()
+        pred_xy = pred_xy.unsqueeze(2).detach()  # batch_size, num_anchors, 1 , 2, conv_height, conv_width
+        pred_wh = pred_wh.unsqueeze(2).detach()  # batch_size, num_anchors, 1 , 2, conv_height, conv_width
+
         pred_wh_mid_point = pred_wh / 2
         pred_min = pred_xy - pred_wh_mid_point
         pred_max = pred_xy + pred_wh_mid_point
@@ -208,34 +206,31 @@ class Yolo(nn.Module):
         true_areas = true_wh[:, :, :, 0, ...] * true_wh[:, :, :, 1, ...]
 
         union_areas = pred_areas + true_areas - intersect_areas
-        # torch.Size([batch_size, num_anchors, num_true_boxes, conv_height, conv_width])
-        iou_scores = intersect_areas / union_areas
+               iou_scores = intersect_areas / union_areas  # torch.Size([batch_size, num_anchors, num_true_boxes, conv_height, conv_width])
+
         best_iou, best_iou_index = torch.max(iou_scores, dim=2, keepdim=True)
 
         # torch.Size([batch_size, num_anchors, 1, conv_height, conv_width])
 
-        # torch.Size([batch_size, num_anchors, 1, conv_height, conv_width])
-        object_mask = (best_iou > self.iou_threshold).float().to(
-            yolo_output.device)
+        object_mask = (best_iou > self.iou_threshold).float().to(yolo_output.device)         # torch.Size([batch_size, num_anchors, 1, conv_height, conv_width])
 
-        no_object_weigth = self.no_object_scale * \
-            (torch.ones_like(object_mask) - object_mask) * \
-            (torch.ones_like(detectors_mask) - detectors_mask)
 
-        no_object_loss = nn.MSELoss(reduction='sum')(torch.zeros_like(
-            pred_confidence), no_object_weigth * pred_confidence)
-        object_loss = nn.MSELoss(reduction='sum')(
-            self.object_scale * detectors_mask * best_iou, self.object_scale * detectors_mask * pred_confidence)
+
+        no_object_weigth = self.no_object_scale * (1 - object_mask) * (1 - detectors_mask)
+                no_object_loss = nn.MSELoss(size_average=False)(torch.zeros_like(pred_confidence), no_object_weigth * pred_confidence)
+        object_loss = nn.MSELoss(size_average=False)(self.object_scale * detectors_mask * best_iou, self.object_scale * detectors_mask * pred_confidence)
+
+
 
         matching_classes = matching_true_boxes[:, :, 4:, ...]
 
-        classification_loss = nn.MSELoss(reduction='sum')(
-            self.class_scale * detectors_mask * matching_classes, self.class_scale * detectors_mask * pred_class_prob)
+        classification_loss = nn.MSELoss(size_average=False)(self.class_scale * detectors_mask * matching_classes, self.class_scale * detectors_mask * pred_class_prob)
+
 
         matching_boxes = matching_true_boxes[:, :, 0:4, ...]
 
-        coordinates_loss = nn.MSELoss(reduction='sum')(
-            self.coordinates_scale * detectors_mask * matching_boxes, self.class_scale * detectors_mask * pred_boxes)
+        coordinates_loss = nn.MSELoss(size_average=False)(self.coordinates_scale * detectors_mask * matching_boxes, self.class_scale * detectors_mask * pred_boxes)
+
 
         total_loss = (object_loss + no_object_loss + classification_loss +
                       coordinates_loss) / (batch_size * num_true_boxes)
