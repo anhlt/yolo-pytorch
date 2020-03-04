@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+package grpc;
+
+
+enum FileType {
+  PNG = 0;
+  JPG = 1;
+}
+
+message Size {
+     int32 width = 1;
+     int32 heigh = 2;
+}
+
+message Metadata {
+     Size size = 1;
+     FileType image_format = 2;
+}
+
+
+message ImageMessage {
+    oneof test_oneof {
+            Metadata meta = 2;
+            bytes image = 1;
+        }
+}
+
+
+message Position {
+    int64 classId = 1;
+    int64 left = 2;
+    int64 top = 3;
+    int64 right = 4;
+    int64 bottom = 5;
+}
+
+message PositionsResponse {
+    repeated Position position = 1;
+}
+
+service ObjectDetectionServices {
+
+    rpc detect(ImageMessage) returns (PositionsResponse) {}
+
+}

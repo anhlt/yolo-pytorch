@@ -194,3 +194,12 @@ def im_path_to_tensor(im: str, transform: Callable[[Image.Image], torch.Tensor])
     ratio: Tuple[float, float] = (448 / image_size[0], 448 / image_size[1])
 
     return img_tensor, ratio
+
+def image_to_tensor(img: Image, transform: Callable[[Image.Image], torch.Tensor]) -> Tuple[torch.Tensor, Tuple[float, float]]:
+
+    image_size: Tuple[int, int] = img.size
+    img_tensor: torch.Tensor = transform(img)
+    img_tensor = img_tensor.unsqueeze(0)
+
+    ratio: Tuple[float, float] = (448 / image_size[0], 448 / image_size[1])
+    return img_tensor, ratio

@@ -24,7 +24,7 @@ WORKDIR /tmp/
 ADD ./environment-cpu.yml /tmp/environment.yml
 RUN /opt/conda/bin/conda env create -f environment.yml
 
-ENV PATH /opt/conda/envs/pytorch/bin:$PATH
+ENV PATH /opt/conda/envs/pytorch/bin:/home/anh/.local/bin:$PATH
 
 
 RUN CC="cc -mavx2" pip install --no-cache-dir -U --force-reinstall pillow-simd==6.2.2.post1

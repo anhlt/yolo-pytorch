@@ -11,7 +11,9 @@ from numpy import ndarray
 from PIL import Image
 from typing import Tuple, List, Callable
 import numpy as np
+from typing import TypeVar
 
+T = TypeVar('T')
 
 class Yolo(nn.Module):
     """docstring for Yolo
@@ -104,14 +106,14 @@ class Yolo(nn.Module):
         classes = classes[nms_index]
         return boxes, scores, classes
 
-    def predict(self, image: str, im_to_tensor_func: Callable[[str], Tuple[torch.Tensor, Tuple[float, float]]], score_threshold: float = 0.6, iou_threshold: float = 0.5):
+    def predict(self, image: T, im_to_tensor_func: Callable[[T], Tuple[torch.Tensor, Tuple[float, float]]], score_threshold: float = 0.6, iou_threshold: float = 0.5):
         """Predict
 
         Parameters
         ----------
-        image : str
+        image : T
             Shape: (1, 3, heith, width)
-        im_to_tensor_func : Callable[[str], Tuple[torch.Tensor, Tuple[float, float]]]
+        im_to_tensor_func : Callable[[T], Tuple[torch.Tensor, Tuple[float, float]]]
             Description
         score_threshold : float, optional
             Description
@@ -159,8 +161,7 @@ class Yolo(nn.Module):
         """
         # classification loss
 
-        pred_confidence, pred_xy, pred_wh, pred_class_prob = self.yolo_head(
-            yolo_output)
+        pred_confidence, pred_xy, pred_wh, pred_class_prob = self.yolo_head(yolo_output)
         # pred_confidence : torch.Size([batch_size, num_anchors, 1, conv_height, conv_width])
         # pred_xy : torch.Size([batch_size, num_anchors, 2, conv_height, conv_width])
         # pred_wh : torch.Size([batch_size, num_anchors, 2, conv_height, conv_width])
@@ -199,14 +200,13 @@ class Yolo(nn.Module):
         intersect_max = torch.min(true_max, pred_max)
         intersect_wh = (intersect_max - intersect_min).clamp(min=0)
 
-        intersect_areas = intersect_wh[:, :, :,
-                                       0, ...] * intersect_wh[:, :, :, 1, ...]
+        intersect_areas = intersect_wh[:, :, :, 0, ...] * intersect_wh[:, :, :, 1, ...]
 
         pred_areas = pred_wh[:, :, :, 0, ...] * pred_wh[:, :, :, 1, ...]
         true_areas = true_wh[:, :, :, 0, ...] * true_wh[:, :, :, 1, ...]
 
         union_areas = pred_areas + true_areas - intersect_areas
-               iou_scores = intersect_areas / union_areas  # torch.Size([batch_size, num_anchors, num_true_boxes, conv_height, conv_width])
+        iou_scores = intersect_areas / union_areas  # torch.Size([batch_size, num_anchors, num_true_boxes, conv_height, conv_width])
 
         best_iou, best_iou_index = torch.max(iou_scores, dim=2, keepdim=True)
 
@@ -217,7 +217,7 @@ class Yolo(nn.Module):
 
 
         no_object_weigth = self.no_object_scale * (1 - object_mask) * (1 - detectors_mask)
-                no_object_loss = nn.MSELoss(size_average=False)(torch.zeros_like(pred_confidence), no_object_weigth * pred_confidence)
+        no_object_loss = nn.MSELoss(size_average=False)(torch.zeros_like(pred_confidence), no_object_weigth * pred_confidence)
         object_loss = nn.MSELoss(size_average=False)(self.object_scale * detectors_mask * best_iou, self.object_scale * detectors_mask * pred_confidence)
 
 
