@@ -1,9 +1,15 @@
+"""Summary
+"""
 import numpy as np
 import torch
+import torchvision.transforms as transforms
+from typing import Callable, Tuple
+from PIL import Image
 
 
 def preprocess_true_boxes(true_boxes, anchors, image_size, num_classes):
     """Find detector in YOLO where ground truth box should appear.
+
     Parameters
     ----------
     true_boxes : array
@@ -16,12 +22,15 @@ def preprocess_true_boxes(true_boxes, anchors, image_size, num_classes):
         is the spatial dimension of the final convolutional features.
     image_size : array-like
         List of image dimensions in form of h, w in pixels.
+    num_classes : TYPE
+        Description
+
     Returns
     -------
     detectors_mask : array
         0/1 mask for detectors in [num_anchors, 1 ,conv_height, conv_width]
         that should be compared with a matching ground truth box.
-    matching_true_boxes: array
+    matching_true_boxes : array
         Same shape as detectors_mask with the corresponding ground truth box
         adjusted for comparison with predicted parameters at training time.
     """
@@ -96,6 +105,7 @@ def boxes_to_cornels(box_xy, box_wh):
         shape [batch_size, num_anchors, 2, conv_height, conv_width]
     box_wh : torch.Tensor
         Predicted wh value shape [batch_size, num_anchors, 2, conv_height, conv_width]
+
     Returns
     -------
     torch.Tensor
@@ -116,8 +126,9 @@ def boxes_to_cornels(box_xy, box_wh):
     )
 
 
-def yolo_filter_boxes(box_confidence, boxes, box_class_probs, threshold=.6):
+def yolo_filter_boxes(box_confidence: torch.Tensor, boxes: torch.Tensor, box_class_probs: torch.Tensor, threshold: float=.6):
     """filter boxes that has score smaller than threshold
+
     Parameters
     ----------
     box_confidence : torch.Tensor
@@ -127,7 +138,7 @@ def yolo_filter_boxes(box_confidence, boxes, box_class_probs, threshold=.6):
         boxes in format x_min, y_min, x_max, y_max
         shape [batch_size, num_anchors, 4, conv_height, conv_width]
 
-    box_class_probs : TYPE
+    box_class_probs : torch.Tensor
         Class probalility
         shape [batch_size, num_anchors, num_classes, conv_height, conv_width]
     threshold : float, optional
@@ -157,3 +168,29 @@ def yolo_filter_boxes(box_confidence, boxes, box_class_probs, threshold=.6):
     boxes = boxes[prediction_mask.expand_as(boxes)].view(-1, 4)
 
     return boxes, scores, classes
+
+def im_path_to_tensor(im: str, transform: Callable[[Image.Image], torch.Tensor]) -> Tuple[torch.Tensor, Tuple[float, float]]:
+    """Converts an image into a network input.
+
+    Parameters
+    ----------
+    im : str
+        a color image in BGR order
+
+    Returns
+    -------
+    blob : Tuple[Tensor, Tuple[float, float]]
+        a data blob holding an image pyramid
+    im_scale_factors : list
+        list of image scales (relative to im) used
+        in the image pyramid
+    """
+
+    img: Image.Image = Image.open(im).convert('RGB')
+    image_size: Tuple[int, int] = img.size
+    img_tensor: torch.Tensor = transform(img)
+    img_tensor = img_tensor.unsqueeze(0)
+
+    ratio: Tuple[float, float] = (448 / image_size[0], 448 / image_size[1])
+
+    return img_tensor, ratio

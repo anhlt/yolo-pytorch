@@ -1,11 +1,24 @@
+"""Summary
+"""
 from torch import nn
 from torch.nn import MaxPool2d
 import torch
 import torch.nn.functional as F
+from typing import Tuple
 
 
 class Conv2d(nn.Module):
-    """docstring for Conv2d"""
+    """docstring for Conv2d
+
+    Attributes
+    ----------
+    bn : TYPE
+        Description
+    conv : TYPE
+        Description
+    relu : TYPE
+        Description
+    """
 
     def __init__(self,
                  in_channels,
@@ -15,7 +28,25 @@ class Conv2d(nn.Module):
                  relu=True,
                  same_padding=False,
                  bn=False):
+        """Summary
 
+        Parameters
+        ----------
+        in_channels : TYPE
+            Description
+        out_channels : TYPE
+            Description
+        kernel_size : TYPE
+            Description
+        stride : int, optional
+            Description
+        relu : bool, optional
+            Description
+        same_padding : bool, optional
+            Description
+        bn : bool, optional
+            Description
+        """
         super(Conv2d, self).__init__()
         padding = int((kernel_size - 1) / 2) if same_padding else 0
         self.conv = nn.Conv2d(in_channels, out_channels,
@@ -28,6 +59,18 @@ class Conv2d(nn.Module):
         self.relu = nn.LeakyReLU(negative_slope=0.1) if relu else None
 
     def forward(self, x):
+        """Summary
+
+        Parameters
+        ----------
+        x : TYPE
+            Description
+
+        Returns
+        -------
+        TYPE
+            Description
+        """
         x = self.conv(x)
         if self.bn is not None:
             x = self.bn(x)
@@ -37,9 +80,36 @@ class Conv2d(nn.Module):
 
 
 class BottleneckBlock(nn.Module):
-    """docstring for BottleneckBlock"""
+    """docstring for BottleneckBlock
+
+    Attributes
+    ----------
+    bottleneck_filter : TYPE
+        Description
+    first_layer : TYPE
+        Description
+    input_channels : TYPE
+        Description
+    outer_filter : TYPE
+        Description
+    second_layer : TYPE
+        Description
+    third_layer : TYPE
+        Description
+    """
 
     def __init__(self, input_channels: int, outer_filter: int, bottleneck_filter: int):
+        """Summary
+
+        Parameters
+        ----------
+        input_channels : int
+            Description
+        outer_filter : int
+            Description
+        bottleneck_filter : int
+            Description
+        """
         super(BottleneckBlock, self).__init__()
         self.input_channels = input_channels
         self.outer_filter = outer_filter
@@ -50,6 +120,18 @@ class BottleneckBlock(nn.Module):
         self.third_layer = Conv2d(bottleneck_filter, outer_filter, 3, same_padding=True, bn=True)
 
     def forward(self, x):
+        """Summary
+
+        Parameters
+        ----------
+        x : TYPE
+            Description
+
+        Returns
+        -------
+        TYPE
+            Description
+        """
         x = self.first_layer(x)
         x = self.second_layer(x)
         x = self.third_layer(x)
@@ -57,9 +139,36 @@ class BottleneckBlock(nn.Module):
 
 
 class DoubleBottleneckBlock(nn.Module):
-    """docstring for DoubleBottleneckBlock"""
+    """docstring for DoubleBottleneckBlock
+
+    Attributes
+    ----------
+    bottleneck_filter : TYPE
+        Description
+    first_layer : TYPE
+        Description
+    input_channels : TYPE
+        Description
+    outer_filter : TYPE
+        Description
+    second_layer : TYPE
+        Description
+    third_layer : TYPE
+        Description
+    """
 
     def __init__(self, input_channels: int, outer_filter: int, bottleneck_filter: int):
+        """Summary
+
+        Parameters
+        ----------
+        input_channels : int
+            Description
+        outer_filter : int
+            Description
+        bottleneck_filter : int
+            Description
+        """
         super(DoubleBottleneckBlock, self).__init__()
         self.input_channels = input_channels
         self.outer_filter = outer_filter
@@ -70,6 +179,18 @@ class DoubleBottleneckBlock(nn.Module):
         self.third_layer = Conv2d(bottleneck_filter, outer_filter, 3, same_padding=True, bn=True)
 
     def forward(self, x):
+        """Summary
+
+        Parameters
+        ----------
+        x : TYPE
+            Description
+
+        Returns
+        -------
+        TYPE
+            Description
+        """
         x = self.first_layer(x)
         x = self.second_layer(x)
         x = self.third_layer(x)
@@ -77,9 +198,38 @@ class DoubleBottleneckBlock(nn.Module):
 
 
 class DarknetBodyBottom(nn.Module):
-    """docstring for DarknetBodyBottom"""
+    """docstring for DarknetBodyBottom
+
+    Attributes
+    ----------
+    eighth_layer : TYPE
+        Description
+    fifth_layer : TYPE
+        Description
+    first_layer : TYPE
+        Description
+    forth_layer : TYPE
+        Description
+    nineth_layer : TYPE
+        Description
+    second_layer : TYPE
+        Description
+    seventh_layer : TYPE
+        Description
+    sixth_layer : TYPE
+        Description
+    third_layer : TYPE
+        Description
+    """
 
     def __init__(self, **kwargs):
+        """Summary
+
+        Parameters
+        ----------
+        **kwargs
+            Description
+        """
         super(DarknetBodyBottom, self).__init__()
         self.first_layer = Conv2d(3, 32, 3, **kwargs)
         self.second_layer = MaxPool2d(2)
@@ -92,6 +242,18 @@ class DarknetBodyBottom(nn.Module):
         self.nineth_layer = DoubleBottleneckBlock(256, 512, 256)
 
     def forward(self, x):
+        """Summary
+
+        Parameters
+        ----------
+        x : TYPE
+            Description
+
+        Returns
+        -------
+        TYPE
+            Description
+        """
         x = self.first_layer(x)
         x = self.second_layer(x)
         x = self.third_layer(x)
@@ -105,25 +267,56 @@ class DarknetBodyBottom(nn.Module):
 
 
 class DarknetBodyHead(nn.Module):
-    """docstring for DarknetBodyHead"""
+    """docstring for DarknetBodyHead
+
+    Attributes
+    ----------
+    eleventh_layer : TYPE
+        Description
+    tenth_layer : TYPE
+        Description
+    """
 
     def __init__(self):
+        """Summary
+        """
         super(DarknetBodyHead, self).__init__()
 
         self.tenth_layer = MaxPool2d(2)
         self.eleventh_layer = DoubleBottleneckBlock(512, 1024, 512)
 
     def forward(self, x):
+        """Summary
 
+        Parameters
+        ----------
+        x : TYPE
+            Description
+
+        Returns
+        -------
+        TYPE
+            Description
+        """
         x = self.tenth_layer(x)
         x = self.eleventh_layer(x)
         return x
 
 
 class DarknetBody(nn.Module):
-    """docstring for DarknetBody"""
+    """docstring for DarknetBody
+
+    Attributes
+    ----------
+    body_bottom : TYPE
+        Description
+    body_head : TYPE
+        Description
+    """
 
     def __init__(self):
+        """Summary
+        """
         super(DarknetBody, self).__init__()
         kwargs = {
             "same_padding": True,
@@ -134,7 +327,18 @@ class DarknetBody(nn.Module):
         self.body_head = DarknetBodyHead()
 
     def forward(self, x):
+        """Summary
 
+        Parameters
+        ----------
+        x : TYPE
+            Description
+
+        Returns
+        -------
+        TYPE
+            Description
+        """
         x = self.body_bottom(x)
         x = self.body_head(x)
 
@@ -142,9 +346,23 @@ class DarknetBody(nn.Module):
 
 
 class DarkNet(nn.Module):
-    """docstring for DarkNet"""
+    """docstring for DarkNet
+
+    Attributes
+    ----------
+    active : TYPE
+        Description
+    body : TYPE
+        Description
+    global_avg_pool : TYPE
+        Description
+    head : TYPE
+        Description
+    """
 
     def __init__(self):
+        """Summary
+        """
         super(DarkNet, self).__init__()
         self.body = DarknetBody()
         self.head = nn.Conv2d(1024, 1000, 1)
@@ -152,6 +370,18 @@ class DarkNet(nn.Module):
         self.active = nn.Softmax(dim=1)
 
     def forward(self, x):
+        """Summary
+
+        Parameters
+        ----------
+        x : TYPE
+            Description
+
+        Returns
+        -------
+        TYPE
+            Description
+        """
         x = self.body(x)
         x = self.head(x)
         x = self.global_avg_pool(x)
@@ -160,11 +390,39 @@ class DarkNet(nn.Module):
 
 
 class Reorg(nn.Module):
+
+    """Summary
+
+    Attributes
+    ----------
+    stride : TYPE
+        Description
+    """
+
     def __init__(self, stride=2):
+        """Summary
+
+        Parameters
+        ----------
+        stride : int, optional
+            Description
+        """
         super(Reorg, self).__init__()
         self.stride = stride
 
     def forward(self, x):
+        """Summary
+
+        Parameters
+        ----------
+        x : TYPE
+            Description
+
+        Returns
+        -------
+        TYPE
+            Description
+        """
         stride = self.stride
         assert(x.data.dim() == 4)
         B = x.data.size(0)
@@ -183,9 +441,42 @@ class Reorg(nn.Module):
 
 
 class YoloBody(nn.Module):
-    """docstring for YoloBody"""
+    """docstring for YoloBody
+
+    Attributes
+    ----------
+    after_concat : TYPE
+        Description
+    body_bottom : TYPE
+        Description
+    body_head : TYPE
+        Description
+    find_grain : TYPE
+        Description
+    first_layer : TYPE
+        Description
+    last_layer : TYPE
+        Description
+    num_anchors : TYPE
+        Description
+    num_classes : TYPE
+        Description
+    re_org : TYPE
+        Description
+    second_layer : TYPE
+        Description
+    """
 
     def __init__(self, num_anchors, num_classes):
+        """Summary
+
+        Parameters
+        ----------
+        num_anchors : TYPE
+            Description
+        num_classes : TYPE
+            Description
+        """
         super(YoloBody, self).__init__()
         kwargs = {
             "same_padding": True,
@@ -208,6 +499,18 @@ class YoloBody(nn.Module):
         self.last_layer = nn.Conv2d(1024, num_anchors * (5 + num_classes), 1, 1, 0, bias=False)
 
     def forward(self, x):
+        """Summary
+
+        Parameters
+        ----------
+        x : TYPE
+            Description
+
+        Returns
+        -------
+        TYPE
+            Description
+        """
         x1 = self.body_bottom(x)
         x = self.body_head(x1)
         x = self.first_layer(x)
@@ -221,9 +524,10 @@ class YoloBody(nn.Module):
 
 
 class YoloHead(nn.Module):
-    """docstring for YoloHead"""
+    """docstring for YoloHead
+    """
 
-    def __init__(self, anchors, num_classes):
+    def __init__(self, anchors: torch.Tensor, num_classes: int):
         """Convert final layer features to bounding box
 
         Parameters
@@ -235,16 +539,25 @@ class YoloHead(nn.Module):
             number of target class
         """
         super(YoloHead, self).__init__()
-        self.anchors = anchors
-        self.num_classes = num_classes
+        self.anchors :torch.Tensor = anchors
+        self.num_classes : int = num_classes
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor] : # type: ignore
         """Summary
 
         Parameters
         ----------
         x : torch.Tensor
             Convolution feature shape (batch, (5 + num_classes) * num_anchors, conv_height, conv_width)
+
+        Returns
+        -------
+        Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]
+            Return tuple of tensor
+                - box_confidence: the confidence that box contain an object
+                - box_xy: predicted box xy value
+                - box_wh: predicted box wh value
+                - box_class_probs: predicted classes probabilities
         """
 
         num_anchors = len(self.anchors)
