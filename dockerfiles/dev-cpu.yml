@@ -4,5 +4,8 @@ services:
         build:
             context: ..
             dockerfile: ./dockerfiles/Dockerfile-cpu
+        volumes:
+            - "..:/Users/anhlt/workspace/yolo_pytorch/"
         image: "tuananhbk/yolo:cpu"
+        user: root
         command: jupyter lab --ip=0.0.0.0 --port=8889 --NotebookApp.password='sha1:4018b457b8a9:84c65a176a549c58609c3cf38fa50b4b1b12b808'

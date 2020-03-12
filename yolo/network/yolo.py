@@ -11,7 +11,9 @@ from numpy import ndarray
 from PIL import Image
 from typing import Tuple, List, Callable
 import numpy as np
+from typing import TypeVar
 
+T = TypeVar('T')
 
 class Yolo(nn.Module):
     """docstring for Yolo
@@ -104,14 +106,14 @@ class Yolo(nn.Module):
         classes = classes[nms_index]
         return boxes, scores, classes
 
-    def predict(self, image: str, im_to_tensor_func: Callable[[str], Tuple[torch.Tensor, Tuple[float, float]]], score_threshold: float = 0.6, iou_threshold: float = 0.5):
+    def predict(self, image: T, im_to_tensor_func: Callable[[T], Tuple[torch.Tensor, Tuple[float, float]]], score_threshold: float = 0.6, iou_threshold: float = 0.5):
         """Predict
 
         Parameters
         ----------
-        image : str
+        image : T
             Shape: (1, 3, heith, width)
-        im_to_tensor_func : Callable[[str], Tuple[torch.Tensor, Tuple[float, float]]]
+        im_to_tensor_func : Callable[[T], Tuple[torch.Tensor, Tuple[float, float]]]
             Description
         score_threshold : float, optional
             Description

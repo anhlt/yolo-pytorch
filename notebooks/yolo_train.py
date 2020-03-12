@@ -20,23 +20,23 @@
 
 # +
 import torch
-from src.utils.datasets.ggimages import OpenImage
-from src.utils.datasets.transform import RandomHorizontalFlip, Resize, Compose, XyToCenter
+from yolo.utils.datasets.ggimages import OpenImage
+from yolo.utils.datasets.transform import RandomHorizontalFlip, Resize, Compose, XyToCenter
 import torchvision.transforms as transforms
-from src.utils.display.images import imshow, result_show
+from yolo.utils.display.images import imshow, result_show
 from torch.utils.data import DataLoader
-from src.utils.datasets.adapter import convert_data
+from yolo.utils.datasets.adapter import convert_data
 import numpy as np
-from src.network.yolo import Yolo
-from src.config import VOC_ANCHORS
-from src.utils.process_boxes import preprocess_true_boxes
-from src.config import IOU_THRESHOLD, TENSORBOARD_PATH
+from yolo.network.yolo import Yolo
+from yolo.config import VOC_ANCHORS
+from yolo.utils.process_boxes import preprocess_true_boxes
+from yolo.config import IOU_THRESHOLD, TENSORBOARD_PATH
 from tensorboardX import SummaryWriter
 from datetime import datetime
 import time
 from torch.optim import SGD, RMSprop, Adam
 from torch.optim.lr_scheduler import StepLR
-from src.utils.evaluate.metter import AverageMeter
+from yolo.utils.evaluate.metter import AverageMeter
 
 
 
@@ -84,7 +84,7 @@ print(len(ds_val))
 
 
 # +
-from src.network.base import DarkNet, DarknetBody, YoloBody
+from yolo.network.base import DarkNet, DarknetBody, YoloBody
 
 model = Yolo(VOC_ANCHORS, ds.classes)
 model.cuda()

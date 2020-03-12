@@ -17,14 +17,15 @@
 # %load_ext autoreload
 # %autoreload 2
 # %cd /data/
+# %pwd
 
-from src.network.base import DarkNet, DarknetBody, YoloBody
+from yolo.network.base import DarkNet, DarknetBody, YoloBody
 import torch
-from src.utils.display.images import result_show
-from src.network.yolo import Yolo
-from src.config import VOC_ANCHORS
+from yolo.utils.display.images import result_show
+from yolo.network.yolo import Yolo
+from yolo.config import VOC_ANCHORS
 from PIL import Image
-from src.utils.process_boxes import im_path_to_tensor
+from yolo.utils.process_boxes import im_path_to_tensor, image_to_tensor
 from functools import partial
 from torchvision import transforms
 
@@ -38,7 +39,7 @@ transform = transforms.Compose([
     transforms.Resize((448, 448)),
     transforms.ToTensor()])
 
-func = partial(im_path_to_tensor, transform=transform)
+func = partial(image_to_tensor, transform=transform)
 
 model = Yolo(VOC_ANCHORS, classes)
 model.load_state_dict(torch.load(
@@ -49,7 +50,9 @@ with torch.no_grad():
     img_path = './data/example/gs5.jpg'
     img = Image.open(img_path)
     boxes, scores, classes = model.predict(
-        img_path, func,  score_threshold=0.5, iou_threshold=0.2)
-result_show(img, boxes, classes, scores,  ['__background__', 'Cat', 'Flower', 'Plant', 'Animal', 'Dog', 'Houseplant', 'Tree'])
+       img, func,  score_threshold=0.5, iou_threshold=0.2)
+    print(boxes, scores, classes)
+result_show(img, boxes, classes, scores,  [
+            '__background__', 'Plant', 'Flower', 'Tree'])
 
 
