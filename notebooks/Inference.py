@@ -6,7 +6,7 @@
 #       extension: .py
 #       format_name: light
 #       format_version: '1.5'
-#       jupytext_version: 1.3.4
+#       jupytext_version: 1.4.0
 #   kernelspec:
 #     display_name: Python 3
 #     language: python
@@ -28,7 +28,8 @@ from src.utils.process_boxes import im_path_to_tensor
 from functools import partial
 from torchvision import transforms
 
-classes = ['__background__', 'Plant', 'Flower', 'Tree']
+classes = ['__background__', 'Cat', 'Flower', 'Plant', 'Animal', 'Dog', 'Houseplant', 'Tree']
+
 
 
 # +
@@ -49,7 +50,6 @@ with torch.no_grad():
     img = Image.open(img_path)
     boxes, scores, classes = model.predict(
         img_path, func,  score_threshold=0.5, iou_threshold=0.2)
-result_show(img, boxes, classes, scores,  [
-            '__background__', 'Plant', 'Flower', 'Tree'])
+result_show(img, boxes, classes, scores,  ['__background__', 'Cat', 'Flower', 'Plant', 'Animal', 'Dog', 'Houseplant', 'Tree'])
 
 

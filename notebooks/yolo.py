@@ -6,7 +6,7 @@
 #       extension: .py
 #       format_name: light
 #       format_version: '1.5'
-#       jupytext_version: 1.3.4
+#       jupytext_version: 1.4.0
 #   kernelspec:
 #     display_name: Python 3
 #     language: python
@@ -68,7 +68,7 @@ val_transform = transforms.Compose([
             ])
 
 # +
-batch_size = 16
+batch_size = 32
 
 ds = OpenImage('/data/data/OpenImage/', 'train', general_transform=general_transform, transform=transform)
 ds_val = OpenImage('/data/data/OpenImage/', 'validation', general_transform=val_general_transform, transform=val_transform)
@@ -156,7 +156,7 @@ def train(data_gen, data_val_gen ,model, metters, optimizer, lr_scheduler, tenso
 
 writer = SummaryWriter("%s/%s_rms_0.005_with_aug" % (TENSORBOARD_PATH , datetime.now().strftime('%m/%d_%H:%M')))
 train_loss = AverageMeter()
-for i in range(20):
+for i in range(30):
     train(train_data_loader, val_data_loader ,model, train_loss, optimizer, exp_lr_scheduler, writer,i)
     torch.save(model.state_dict(), './save_model/model_%s.pth' % i)
 
